@@ -9,25 +9,14 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class DoomsMarkersFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         DoomsMarkers.init();
-
-        ResourceLocation icon = new ResourceLocation("doomsmarkers", "textures/marker.png");
-        List<Marker> markers = new ArrayList<>();
-        markers.add(new Marker(new BlockPos(0, 70, 0), new float[]{1, 0.75f, 0.2f, 1}));
-        markers.add(new Marker(new BlockPos(100, 70, 25), new float[]{0.9f, 0.35f, 0.72f, 1}));
-        markers.add(new Marker(new BlockPos(-50, 30, -20), new float[]{0.24f, 0.5f, 0.298f, 1}));
 
         HudRenderCallback.EVENT.register((context, tickDelta) -> {
             Minecraft minecraft = Minecraft.getInstance();
@@ -46,7 +35,7 @@ public class DoomsMarkersFabric implements ModInitializer {
             double fov = minecraft.options.fov().get() * minecraft.player.getFieldOfViewModifier();
             Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
-            for (Marker marker : markers) {
+            for (Marker marker : DoomsMarkers.MARKERS) {
                 Vector4f clipPos = new Vector4f(marker.position().getX(), marker.position().getY(), marker.position().getZ(), 1.0f);
                 clipPos.mul(modelView);
                 clipPos.mul(projectionMatrix);
@@ -76,9 +65,9 @@ public class DoomsMarkersFabric implements ModInitializer {
 
                 RenderSystem.setShader(GameRenderer::getPositionTexShader);
                 RenderSystem.setShaderColor(marker.colour()[0], marker.colour()[1], marker.colour()[2], focused ? marker.colour()[3] : marker.colour()[3] / 2f);
-                RenderSystem.setShaderTexture(0, icon);
+                RenderSystem.setShaderTexture(0, marker.icon());
                 RenderSystem.enableBlend();
-                context.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
+                context.blit(marker.icon(), 0, 0, 0, 0, 16, 16, 16, 16);
 
                 Font font = minecraft.font;
                 int textWidth = font.width(distanceText);
