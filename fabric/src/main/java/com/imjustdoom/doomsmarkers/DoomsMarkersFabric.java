@@ -7,6 +7,7 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -42,7 +43,8 @@ public class DoomsMarkersFabric implements ModInitializer {
                     .rotate(Axis.YP.rotationDegrees(camera.getYRot() + 180.0f))
                     .translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-            Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(minecraft.options.fov().get());
+            double fov = minecraft.options.fov().get() * minecraft.player.getFieldOfViewModifier();
+            Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
             for (Marker marker : markers) {
                 Vector4f clipPos = new Vector4f(marker.position().getX(), marker.position().getY(), marker.position().getZ(), 1.0f);
@@ -65,6 +67,9 @@ public class DoomsMarkersFabric implements ModInitializer {
                 boolean focused = screenX > context.guiWidth() / 2f - 12 && screenX < context.guiWidth() / 2f + 12
                         && screenY > context.guiHeight() / 2f - 12 && screenY < context.guiHeight() / 2f + 12;
 
+                double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.position().getX(), marker.position().getY(), marker.position().getZ()));
+                String distanceText = String.format("%.0fm", distance);
+
                 PoseStack pose = context.pose();
                 pose.pushPose();
                 pose.translate(screenX - 8, screenY - 8, 0);
@@ -74,6 +79,11 @@ public class DoomsMarkersFabric implements ModInitializer {
                 RenderSystem.setShaderTexture(0, icon);
                 RenderSystem.enableBlend();
                 context.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
+
+                Font font = minecraft.font;
+                int textWidth = font.width(distanceText);
+                pose.translate(8 - textWidth / 2.0, 16, 0);
+                context.drawString(font, distanceText, 0, 0, 0xFFFFFF);
 
                 RenderSystem.disableBlend();
                 pose.popPose();
