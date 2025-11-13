@@ -1,25 +1,25 @@
 package com.imjustdoom.doomsmarkers;
 
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.phys.Vec3;
 
 public class Marker {
-    private BlockPos position;
+    private Vec3 position;
     private float[] colour;
     private int iconIndex;
     private ItemStack itemIcon = new ItemStack(Items.DIRT_PATH);
 
-    public Marker(BlockPos position, float[] colour, int iconIndex) {
+    public Marker(Vec3 position, float[] colour, int iconIndex) {
         this(position, colour, iconIndex, null);
     }
 
-    public Marker(BlockPos position, float[] colour, Item itemIcon) {
+    public Marker(Vec3 position, float[] colour, Item itemIcon) {
         this(position, colour, -1, itemIcon);
     }
 
-    public Marker(BlockPos position, float[] colour, int iconIndex, Item itemIcon) {
+    public Marker(Vec3 position, float[] colour, int iconIndex, Item itemIcon) {
         this.position = position;
         this.colour = colour;
         this.iconIndex = iconIndex;
@@ -28,12 +28,16 @@ public class Marker {
         }
     }
 
-    public BlockPos getPosition() {
+    public Vec3 getPosition() {
         return this.position;
     }
 
     public float[] getColour() {
         return this.colour;
+    }
+
+    public void setColour(float[] colour) {
+        this.colour = colour;
     }
 
     public int getIconIndex() {

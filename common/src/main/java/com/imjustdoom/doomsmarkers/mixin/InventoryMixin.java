@@ -21,6 +21,7 @@ public class InventoryMixin {
             Marker marker = DoomsMarkers.FOCUSED_MARKERS.get(0);
             if (index != 0) {
                 marker.changeIconIndex(index == -1);
+                DoomsMarkers.KEY_USED_THIS_HOLD = true;
                 ci.cancel();
             }
         }
