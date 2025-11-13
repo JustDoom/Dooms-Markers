@@ -3,19 +3,29 @@ package com.imjustdoom.doomsmarkers;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
+import java.util.ArrayList;
+
 public class DoomsMarkersFabric implements ModInitializer {
     @Override
     public void onInitialize() {
+        if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
+            KeyBindingHelper.registerKeyBinding(DoomsMarkers.MARKER_KEY_MAPPING);
+        }
+
         DoomsMarkers.init();
 
         HudRenderCallback.EVENT.register((context, tickDelta) -> {
@@ -35,8 +45,10 @@ public class DoomsMarkersFabric implements ModInitializer {
             double fov = minecraft.options.fov().get() * minecraft.player.getFieldOfViewModifier();
             Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
-            for (Marker marker : DoomsMarkers.MARKERS) {
-                Vector4f clipPos = new Vector4f(marker.position().getX(), marker.position().getY(), marker.position().getZ(), 1.0f);
+            DoomsMarkers.FOCUSED_MARKERS.clear();
+
+            for (Marker marker : new ArrayList<>(DoomsMarkers.MARKERS)) {
+                Vector4f clipPos = new Vector4f(marker.getPosition().getX(), marker.getPosition().getY(), marker.getPosition().getZ(), 1.0f);
                 clipPos.mul(modelView);
                 clipPos.mul(projectionMatrix);
 
@@ -56,7 +68,19 @@ public class DoomsMarkersFabric implements ModInitializer {
                 boolean focused = screenX > context.guiWidth() / 2f - 12 && screenX < context.guiWidth() / 2f + 12
                         && screenY > context.guiHeight() / 2f - 12 && screenY < context.guiHeight() / 2f + 12;
 
-                double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.position().getX(), marker.position().getY(), marker.position().getZ()));
+                if (focused) {
+                    DoomsMarkers.FOCUSED_MARKERS.add(marker);
+                    if (DoomsMarkers.MARKER_KEY_MAPPING.isDown()) {
+                        if (minecraft.options.keyAttack.consumeClick()) {
+                            DoomsMarkers.MARKERS.remove(marker);
+                        } else if (minecraft.options.keyPickItem.consumeClick()) {
+                            marker.setIconIndex(-1);
+                            marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
+                        }
+                    }
+                }
+
+                double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().getX(), marker.getPosition().getY(), marker.getPosition().getZ()));
                 String distanceText = String.format("%.0fm", distance);
 
                 PoseStack pose = context.pose();
@@ -64,10 +88,17 @@ public class DoomsMarkersFabric implements ModInitializer {
                 pose.translate(screenX - 8, screenY - 8, 0);
 
                 RenderSystem.setShader(GameRenderer::getPositionTexShader);
-                RenderSystem.setShaderColor(marker.colour()[0], marker.colour()[1], marker.colour()[2], focused ? marker.colour()[3] : marker.colour()[3] / 2f);
-                RenderSystem.setShaderTexture(0, marker.icon());
-                RenderSystem.enableBlend();
-                context.blit(marker.icon(), 0, 0, 0, 0, 16, 16, 16, 16);
+                if (marker.getIconIndex() == -1) {
+                    RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 1 / 2f);
+                    context.renderItem(marker.getItemIcon(), 0, 0);
+                    RenderSystem.setShaderColor(marker.getColour()[0], marker.getColour()[1], marker.getColour()[2], focused ? marker.getColour()[3] : marker.getColour()[3] / 2f);
+                } else {
+                    ResourceLocation icon = DoomsMarkers.MARKER_ICONS.get(marker.getIconIndex());
+                    RenderSystem.setShaderColor(marker.getColour()[0], marker.getColour()[1], marker.getColour()[2], focused ? marker.getColour()[3] : marker.getColour()[3] / 2f);
+                    RenderSystem.setShaderTexture(0, icon);
+                    RenderSystem.enableBlend();
+                    context.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
+                }
 
                 Font font = minecraft.font;
                 int textWidth = font.width(distanceText);
@@ -80,5 +111,7 @@ public class DoomsMarkersFabric implements ModInitializer {
 
             RenderSystem.setShaderColor(1, 1, 1, 1);
         });
+
+
     }
 }
