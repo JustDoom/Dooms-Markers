@@ -26,5 +26,7 @@ public class DoomsMarkers {
         MARKERS.add(new Marker(new BlockPos(0, 70, 0), new float[]{1, 0.75f, 0.2f, 1}, 0));
         MARKERS.add(new Marker(new BlockPos(100, 70, 25), new float[]{0.9f, 0.35f, 0.72f, 1}, 1));
         MARKERS.add(new Marker(new BlockPos(-50, 30, -20), new float[]{0.24f, 0.5f, 0.298f, 1}, 2));
+
+        System.out.println(MARKERS);
     }
 }

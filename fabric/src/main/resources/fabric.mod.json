@@ -1,6 +1,6 @@
 {
     "schemaVersion": 1,
-    "id": "mod_id",
+    "id": "doomsmarkers",
     "version": "${version}",
     "name": "${mod_name}",
     "description": "${description}",

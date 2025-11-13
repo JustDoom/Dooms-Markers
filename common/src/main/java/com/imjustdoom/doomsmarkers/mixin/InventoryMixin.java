@@ -13,6 +13,7 @@ public class InventoryMixin {
     @Inject(method = "swapPaint", at = @At(value = "HEAD"), cancellable = true)
     public void onHudScroll(double direction, CallbackInfo ci) {
         if (DoomsMarkers.MARKER_KEY_MAPPING.isDown()) {
+            System.out.println("Scroll");
             if (DoomsMarkers.FOCUSED_MARKERS.isEmpty()) {
                 return;
             }
