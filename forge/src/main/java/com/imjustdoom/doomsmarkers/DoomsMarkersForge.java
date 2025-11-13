@@ -11,7 +11,7 @@ public class DoomsMarkersForge {
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
 
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
-            event.register(DoomsMarkers.MARKER_KEY_MAPPING);
+            event.register(DoomsMarkersClient.MARKER_KEY_MAPPING);
         });
 
         DoomsMarkers.init();

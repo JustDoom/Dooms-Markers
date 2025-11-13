@@ -1,6 +1,6 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
+import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,6 +14,6 @@ public class GuiMixin {
     @Inject(method = "render", at = @At(value = "TAIL"),
             slice = @Slice(from = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/PlayerTabOverlay;render(Lnet/minecraft/client/gui/GuiGraphics;ILnet/minecraft/world/scores/Scoreboard;Lnet/minecraft/world/scores/Objective;)V")))
     public void render(GuiGraphics context, float tickDelta, CallbackInfo callbackInfo) {
-        DoomsMarkers.renderMarkers(context);
+        DoomsMarkersClient.renderMarkers(context);
     }
 }
