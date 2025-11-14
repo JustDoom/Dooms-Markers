@@ -12,8 +12,10 @@ import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
+import net.minecraft.world.level.saveddata.maps.MapBanner;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -62,12 +64,40 @@ public abstract class ServerPacketListenerMixin {
                     return;
                 }
 
+                for (MapBanner banner : data.getBanners()) {
+                    List<Float> colour = new ArrayList<>();
+                    for (float value : DoomsMarkers.argbIntToFloatArray(banner.getColor().getTextColor())) {
+                        colour.add(value);
+                    }
+
+                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY(), banner.getPos().getZ()), colour, 2);
+                    DoomsMarkers.MARKERS.get(getPlayer()).add(marker);
+
+                    DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
+                }
+
                 for (MapDecoration decoration : data.getDecorations()) {
-                    if (decoration.getType() == MapDecoration.Type.PLAYER_OFF_MAP || decoration.getType() == MapDecoration.Type.PLAYER_OFF_LIMITS) {
+                    if (decoration.getType() != MapDecoration.Type.RED_X
+                            && decoration.getType() != MapDecoration.Type.MONUMENT
+                            && decoration.getType() != MapDecoration.Type.MANSION
+                            && decoration.getType() != MapDecoration.Type.TARGET_POINT
+                            && decoration.getType() != MapDecoration.Type.TARGET_X
+                            && decoration.getType() != MapDecoration.Type.BLUE_MARKER
+                            && decoration.getType() != MapDecoration.Type.RED_MARKER
+                            && decoration.getType() != MapDecoration.Type.PLAYER) {
                         continue;
                     }
 
-                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), List.of(1f, 1f, 1f, 1f), 2);
+                    List<Float> colour;
+                    if (decoration.getType().hasMapColor()) {
+                        colour = new ArrayList<>();
+                        for (float value : DoomsMarkers.argbIntToFloatArray(decoration.getType().getMapColor())) {
+                            colour.add(value);
+                        }
+                    } else {
+                        colour = List.of(1f, 1f, 1f, 1f);
+                    }
+                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2);
                     DoomsMarkers.MARKERS.get(getPlayer()).add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
