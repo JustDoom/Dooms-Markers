@@ -3,6 +3,16 @@ plugins {
     id 'maven-publish'
 }
 
+if (!project.hasProperty("buildWithoutGitHash")) {
+    def shortCommitHash = providers.exec {
+        commandLine 'git', 'rev-parse', '--short', 'HEAD'
+    }.standardOutput.asText.map { text ->
+        def trimmed = text.trim()
+        trimmed.isEmpty() ? 'unknown' : trimmed
+    }.get()
+    version = "${rootProject.version}-${shortCommitHash}"
+}
+
 base {
     archivesName = "${mod_id}-${project.name}-${minecraft_version}"
 }
