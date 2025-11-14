@@ -44,8 +44,6 @@ public abstract class MinecraftClientMixin {
             } else {
                 Vec3 pos = minecraft.player.position();
                 Marker marker = new Marker(new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 2);
-                DoomsMarkersClient.MARKERS.add(marker);
-
                 DoomsMarkersClient.sendMarkerToServer(marker);
             }
         }

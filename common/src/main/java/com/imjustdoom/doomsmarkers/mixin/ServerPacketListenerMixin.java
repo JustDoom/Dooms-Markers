@@ -49,6 +49,7 @@ public abstract class ServerPacketListenerMixin {
                     Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag)
                             .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
                     DoomsMarkers.MARKERS.get(getPlayer()).add(loaded);
+                    DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
                 }
             }
             case "calculate_map" -> {
@@ -70,7 +71,7 @@ public abstract class ServerPacketListenerMixin {
                         colour.add(value);
                     }
 
-                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY(), banner.getPos().getZ()), colour, 2);
+                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2);
                     DoomsMarkers.MARKERS.get(getPlayer()).add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
