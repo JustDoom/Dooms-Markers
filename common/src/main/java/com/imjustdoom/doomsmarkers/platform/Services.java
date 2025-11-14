@@ -1,6 +1,6 @@
 package com.imjustdoom.doomsmarkers.platform;
 
-import com.imjustdoom.doomsmarkers.Constants;
+import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.platform.services.IPlatformHelper;
 
 import java.util.ServiceLoader;
@@ -24,7 +24,7 @@ public class Services {
         final T loadedService = ServiceLoader.load(clazz)
                 .findFirst()
                 .orElseThrow(() -> new NullPointerException("Failed to load service for " + clazz.getName()));
-        Constants.LOG.debug("Loaded {} for service {}", loadedService, clazz);
+        DoomsMarkers.LOG.debug("Loaded {} for service {}", loadedService, clazz);
         return loadedService;
     }
 }

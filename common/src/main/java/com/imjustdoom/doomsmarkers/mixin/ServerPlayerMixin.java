@@ -71,7 +71,7 @@ public abstract class ServerPlayerMixin extends LivingEntity {
         ListTag markersList = compoundTag.getList("Markers", Tag.TAG_COMPOUND);
         List<Marker> markers = Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList)
                 .getOrThrow(false, err -> System.err.println("Load parse error: " + err));
-        System.out.println("Loaded " + markers.size() + " markers for " + player.getName().getString());
+        DoomsMarkers.LOG.info("Loaded {} markers for {}", markers.size(), player.getName().getString());
         DoomsMarkers.MARKERS.put(player, new ArrayList<>(markers));
     }
 }

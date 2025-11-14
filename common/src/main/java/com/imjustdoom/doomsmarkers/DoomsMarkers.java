@@ -2,6 +2,8 @@ package com.imjustdoom.doomsmarkers;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -9,6 +11,10 @@ import java.util.List;
 import java.util.Map;
 
 public class DoomsMarkers {
+    public static final String MOD_ID = "doomsmarkers";
+    public static final String MOD_NAME = "Doom's Markers";
+    public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
+
     public static final ResourceLocation MARKER_SYNC_PACKET = new ResourceLocation("doomsmarkers", "marker");
     public static final ResourceLocation ADD_MARKER_PACKET = new ResourceLocation("doomsmarkers", "add");
     public static final ResourceLocation DELETE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "delete");
