@@ -19,6 +19,7 @@ public class DoomsMarkersFabric implements ModInitializer {
     public void onInitialize() {
         if (FabricLoader.getInstance().getEnvironmentType() == EnvType.CLIENT) {
             KeyBindingHelper.registerKeyBinding(DoomsMarkersClient.MARKER_KEY_MAPPING);
+            KeyBindingHelper.registerKeyBinding(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
         }
 
         ServerPlayConnectionEvents.INIT.register((listener, server) -> {

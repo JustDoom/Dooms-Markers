@@ -42,11 +42,14 @@ public abstract class ServerPlayerMixin extends LivingEntity {
     public void addAdditionalSaveData(CompoundTag compoundTag, CallbackInfo ci) {
         ServerPlayer player = (ServerPlayer) (Object) this;
         if (!DoomsMarkers.MARKERS.containsKey(player)) {
+            DoomsMarkers.LOG.info("No Markers exist for {} to save", player.getName().getString());
             return;
         }
         Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, DoomsMarkers.MARKERS.get(player))
                 .getOrThrow(false, err -> System.err.println("Save encode error: " + err));
         compoundTag.put("Markers", encodedList);
+
+        DoomsMarkers.LOG.info("Saved {} markers for {}", DoomsMarkers.MARKERS.get(player).size(), player.getName().getString());
 
         DoomsMarkers.MARKERS.remove(player);
     }
@@ -55,6 +58,7 @@ public abstract class ServerPlayerMixin extends LivingEntity {
     public void readAdditionalSaveData(CompoundTag compoundTag, CallbackInfo ci) {
         ServerPlayer player = (ServerPlayer) (Object) this;
         if (!compoundTag.contains("Markers", Tag.TAG_LIST)) {
+            DoomsMarkers.LOG.info("No Markers exist for {}", player.getName().getString());
             DoomsMarkers.MARKERS.put(player, new ArrayList<>());
             return;
         }

@@ -2,7 +2,6 @@ package com.imjustdoom.doomsmarkers.mixin;
 
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -11,9 +10,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -23,10 +20,6 @@ import java.util.List;
 
 @Mixin(value = ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
-    @Shadow
-    @Final
-    private Minecraft minecraft;
-
     @Inject(method = "handleCustomPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundCustomPayloadPacket;getData()Lnet/minecraft/network/FriendlyByteBuf;", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
     public void handleMyPackets(ClientboundCustomPayloadPacket packet, CallbackInfo ci, ResourceLocation location, FriendlyByteBuf friendlyByteBuf) {
         if (!location.getNamespace().equals("doomsmarkers")) {

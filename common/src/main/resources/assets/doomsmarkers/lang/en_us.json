@@ -1,5 +1,6 @@
 {
   "key.categories.doomsmarkers": "Doom's Markers",
 
-  "category.doomsmarkers.use": "Use"
+  "category.doomsmarkers.use": "Use",
+  "category.doomsmarkers.toggle": "Toggle"
 }

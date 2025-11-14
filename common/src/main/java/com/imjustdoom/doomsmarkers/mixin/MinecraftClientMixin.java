@@ -31,13 +31,17 @@ public abstract class MinecraftClientMixin {
             return;
         }
 
+        if (DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING.consumeClick()) {
+            DoomsMarkersClient.TOGGLED_MARKERS = !DoomsMarkersClient.TOGGLED_MARKERS;
+        }
+
         boolean currentDown = DoomsMarkersClient.MARKER_KEY_MAPPING.isDown();
 
         if (!this.doomsMarkers$markerDownLast && currentDown) {
             DoomsMarkersClient.KEY_USED_THIS_HOLD = false;
         }
 
-        if (this.doomsMarkers$markerDownLast && !currentDown && !DoomsMarkersClient.KEY_USED_THIS_HOLD) {
+        if (this.doomsMarkers$markerDownLast && !currentDown && !DoomsMarkersClient.KEY_USED_THIS_HOLD && DoomsMarkersClient.TOGGLED_MARKERS) {
             ItemStack itemStack = minecraft.player.getItemInHand(minecraft.player.getUsedItemHand());
             if (itemStack.getItem() == Items.FILLED_MAP) {
                 minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.CALCULATE_MAP_MARKER_PACKET, new FriendlyByteBuf(Unpooled.buffer())));

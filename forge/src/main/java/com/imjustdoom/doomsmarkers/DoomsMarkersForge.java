@@ -12,6 +12,7 @@ public class DoomsMarkersForge {
 
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
             event.register(DoomsMarkersClient.MARKER_KEY_MAPPING);
+            event.register(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
         });
 
         DoomsMarkers.init();

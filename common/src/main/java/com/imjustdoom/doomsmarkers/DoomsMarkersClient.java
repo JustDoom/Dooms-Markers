@@ -28,14 +28,23 @@ import java.util.List;
 
 public class DoomsMarkersClient {
     public static final KeyMapping MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.use", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.doomsmarkers");
+    public static final KeyMapping TOGGLE_MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.doomsmarkers");
+
     public static final List<Marker> FOCUSED_MARKERS = new ArrayList<>();
     public static final List<Marker> MARKERS = new ArrayList<>();
 
     public static boolean KEY_USED_THIS_HOLD = false;
+    public static boolean TOGGLED_MARKERS = true; // True displays them
 
     public static void renderMarkers(GuiGraphics context) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level == null || minecraft.player == null) {
+            return;
+        }
+
+        FOCUSED_MARKERS.clear();
+
+        if (!TOGGLED_MARKERS) {
             return;
         }
 
@@ -49,8 +58,6 @@ public class DoomsMarkersClient {
 
         double fov = minecraft.options.fov().get() * minecraft.player.getFieldOfViewModifier();
         Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
-
-        FOCUSED_MARKERS.clear();
 
         for (Marker marker : new ArrayList<>(DoomsMarkersClient.MARKERS)) {
             Vector4d clipPos = new Vector4d(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z, 1.0f);
