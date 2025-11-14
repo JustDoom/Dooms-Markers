@@ -50,8 +50,6 @@ public abstract class ServerPlayerMixin extends LivingEntity {
         compoundTag.put("Markers", encodedList);
 
         DoomsMarkers.LOG.info("Saved {} markers for {}", DoomsMarkers.MARKERS.get(player).size(), player.getName().getString());
-
-        DoomsMarkers.MARKERS.remove(player);
     }
 
     @Inject(at = @At("TAIL"), method = "readAdditionalSaveData")

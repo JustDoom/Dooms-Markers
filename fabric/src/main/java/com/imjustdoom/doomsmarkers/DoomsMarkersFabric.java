@@ -23,8 +23,8 @@ public class DoomsMarkersFabric implements ModInitializer {
         }
 
         ServerPlayConnectionEvents.INIT.register((listener, server) -> {
-            DoomsMarkers.MARKERS.putIfAbsent(listener.player, new ArrayList<>());
-            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, DoomsMarkers.MARKERS.get(listener.player))
+            DoomsMarkers.MARKERS.putIfAbsent(listener.getPlayer(), new ArrayList<>());
+            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, DoomsMarkers.MARKERS.get(listener.getPlayer()))
                     .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
 
             CompoundTag wrapper = new CompoundTag();
