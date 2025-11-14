@@ -63,18 +63,15 @@ public abstract class ServerPlayerMixin extends LivingEntity {
 
     @Inject(at = @At("TAIL"), method = "readAdditionalSaveData")
     public void readAdditionalSaveData(CompoundTag compoundTag, CallbackInfo ci) {
-        System.out.println("LOADING DATA");
         ServerPlayer player = (ServerPlayer) (Object) this;
         if (!compoundTag.contains("Markers", Tag.TAG_LIST)) {
             DoomsMarkers.MARKERS.put(player, new ArrayList<>());
-            System.out.println("Empty");
             return;
         }
         ListTag markersList = compoundTag.getList("Markers", Tag.TAG_COMPOUND);
         List<Marker> markers = Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList)
                 .getOrThrow(false, err -> System.err.println("Load parse error: " + err));
         System.out.println("Loaded " + markers.size() + " markers for " + player.getName().getString());
-        System.out.println(markers);
         DoomsMarkers.MARKERS.put(player, new ArrayList<>(markers));
     }
 }

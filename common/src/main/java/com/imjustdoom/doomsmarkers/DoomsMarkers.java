@@ -23,12 +23,6 @@ public class DoomsMarkers {
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/monster_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/square_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/grave_marker.png"));
-
-//        MARKERS.add(new Marker(new Vec3(0, 70, 0), List.of(1f, 0.75f, 0.2f, 1f), 0));
-//        MARKERS.add(new Marker(new Vec3(100, 70, 25), List.of(0.9f, 0.35f, 0.72f, 1f), 1));
-//        MARKERS.add(new Marker(new Vec3(-50, 30, -20), List.of(0.24f, 0.5f, 0.298f, 1f), 2));
-
-        System.out.println(MARKERS);
     }
 
     public static float[] argbIntToFloatArray(int color) {

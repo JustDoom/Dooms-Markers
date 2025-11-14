@@ -20,7 +20,7 @@ public class Marker {
             ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon)
     ).apply(instance, Marker::new));
 
-    private UUID uuid = UUID.randomUUID();
+    private UUID uuid;
     private Vec3 position;
     private List<Float> colour;
     private int iconIndex;
@@ -36,13 +36,6 @@ public class Marker {
 
     public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon) {
         this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon));
-    }
-
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon) {
-        this.position = position;
-        this.colour = colour;
-        this.iconIndex = iconIndex;
-        this.itemIcon = itemIcon;
     }
 
     public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon) {

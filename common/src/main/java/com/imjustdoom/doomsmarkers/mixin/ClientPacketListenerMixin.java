@@ -33,8 +33,6 @@ public abstract class ClientPacketListenerMixin {
             return;
         }
 
-        System.out.println(location);
-        System.out.println(packet.getData());
         if (location.getPath().equals("marker")) {
             CompoundTag wrapper = packet.getData().readNbt();
             if (wrapper != null && wrapper.contains("data", Tag.TAG_LIST)) {
