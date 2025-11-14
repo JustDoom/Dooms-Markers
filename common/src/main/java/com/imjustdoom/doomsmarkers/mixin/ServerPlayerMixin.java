@@ -2,13 +2,10 @@ package com.imjustdoom.doomsmarkers.mixin;
 
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
-import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
@@ -38,16 +35,7 @@ public abstract class ServerPlayerMixin extends LivingEntity {
         Marker marker = new Marker(new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4);
         DoomsMarkers.MARKERS.get((ServerPlayer) (Object) this).add(marker);
 
-        Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                .getOrThrow(false, err -> System.err.println("Failed to encode marker: " + err));
-
-        CompoundTag wrapper = new CompoundTag();
-        wrapper.put("data", encodedMarker);
-
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeNbt(wrapper);
-
-        ((ServerPlayer) (Object) this).connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+        DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);
     }
 
     @Inject(at = @At("TAIL"), method = "addAdditionalSaveData")

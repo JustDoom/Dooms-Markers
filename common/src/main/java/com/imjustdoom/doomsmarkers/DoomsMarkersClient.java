@@ -148,4 +148,21 @@ public class DoomsMarkersClient {
 
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
+
+    public static void sendMarkerToServer(Marker marker) {
+        if (Minecraft.getInstance().player == null) {
+            return;
+        }
+
+        Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
+                .getOrThrow(false, err -> System.err.println("Failed to encode marker: " + err));
+
+        CompoundTag wrapper = new CompoundTag();
+        wrapper.put("data", encodedMarker);
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeNbt(wrapper);
+
+        Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+    }
 }

@@ -1,7 +1,16 @@
 package com.imjustdoom.doomsmarkers;
 
+import io.netty.buffer.Unpooled;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,6 +26,7 @@ public class DoomsMarkers {
 
     public static final ResourceLocation MARKER_SYNC_PACKET = new ResourceLocation("doomsmarkers", "marker");
     public static final ResourceLocation ADD_MARKER_PACKET = new ResourceLocation("doomsmarkers", "add");
+    public static final ResourceLocation CALCULATE_MAP_MARKER_PACKET = new ResourceLocation("doomsmarkers", "calculate_map");
     public static final ResourceLocation DELETE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "delete");
     public static final ResourceLocation UPDATE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "update");
 
@@ -39,4 +49,41 @@ public class DoomsMarkers {
 
         return new float[]{r / 255f, g / 255f, b / 255f, a / 255f};
     }
+
+    public static void sendMarkerToPlayer(ServerPlayer player, Marker marker) {
+        Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
+                .getOrThrow(false, err -> System.err.println("Failed to encode marker: " + err));
+
+        CompoundTag wrapper = new CompoundTag();
+        wrapper.put("data", encodedMarker);
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeNbt(wrapper);
+
+        player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+    }
+
+    public static Vec3 getWorldPosFromDecoration(MapItemSavedData mapData, MapDecoration decoration) {
+        byte x = decoration.getX();
+        byte z = decoration.getY();
+
+        if (decoration.getType() == MapDecoration.Type.PLAYER_OFF_MAP || decoration.getType() == MapDecoration.Type.PLAYER_OFF_LIMITS) {
+            throw new IllegalArgumentException("Cannot reverse clamped decoration: position is out of map bounds");
+        }
+
+        int scale = mapData.scale;
+        int i = 1 << scale;
+
+        double centerX = mapData.centerX;
+        double centerZ = mapData.centerZ;
+
+        double f = x / 2.0;
+        double f1 = z / 2.0;
+
+        double levelX = centerX + f * i;
+        double levelZ = centerZ + f1 * i;
+
+        return new Vec3(levelX, 70, levelZ);
+    }
+
 }
