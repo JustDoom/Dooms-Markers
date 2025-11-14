@@ -2,9 +2,11 @@ package com.imjustdoom.doomsmarkers.mixin;
 
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
+import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,8 +43,15 @@ public abstract class ServerPacketListenerMixin {
         if (!DoomsMarkers.MARKERS.containsKey(getPlayer())) {
             DoomsMarkers.MARKERS.put(getPlayer(), new ArrayList<>());
         }
+
+        SWITCH:
         switch (location.getPath()) {
             case "add" -> {
+                System.out.println(DoomsMarkers.MARKERS);
+                if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
+                    getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
+                    break;
+                }
                 CompoundTag wrapper = packet.getData().readNbt();
                 if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
                     CompoundTag compoundTag = wrapper.getCompound("data");
@@ -55,7 +64,7 @@ public abstract class ServerPacketListenerMixin {
             case "calculate_map" -> {
                 ItemStack itemStack = getPlayer().getItemInHand(getPlayer().getUsedItemHand());
                 if (itemStack.getItem() != Items.FILLED_MAP) {
-                    // Tell player there was an issue
+                    getPlayer().sendSystemMessage(Component.literal("Unable to detect map item").withStyle(ChatFormatting.RED));
                     break;
                 }
 
@@ -66,6 +75,11 @@ public abstract class ServerPacketListenerMixin {
                 }
 
                 for (MapBanner banner : data.getBanners()) {
+                    if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
+                        getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
+                        break SWITCH;
+                    }
+
                     List<Float> colour = new ArrayList<>();
                     for (float value : DoomsMarkers.argbIntToFloatArray(banner.getColor().getTextColor())) {
                         colour.add(value);
@@ -78,6 +92,11 @@ public abstract class ServerPacketListenerMixin {
                 }
 
                 for (MapDecoration decoration : data.getDecorations()) {
+                    if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
+                        getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
+                        break SWITCH;
+                    }
+
                     if (decoration.getType() != MapDecoration.Type.RED_X
                             && decoration.getType() != MapDecoration.Type.MONUMENT
                             && decoration.getType() != MapDecoration.Type.MANSION

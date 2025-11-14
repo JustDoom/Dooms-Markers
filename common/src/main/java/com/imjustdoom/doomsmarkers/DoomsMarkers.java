@@ -33,6 +33,8 @@ public class DoomsMarkers {
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
     public static final Map<ServerPlayer, List<Marker>> MARKERS = new HashMap<>();
 
+    public static final int MAX_MARKERS_PER_PLAYER = 5;
+
     public static void init() {
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/block_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/diamond_marker.png"));
