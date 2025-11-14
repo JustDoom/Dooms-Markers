@@ -7,13 +7,16 @@ Doom's Markers is a mod that adds similar functionality to map mods "Waypoints" 
 - [x] Show distance to Markers
 - [x] Customise Markers with Dye and items
 - [ ] Share Markers
-- [ ] Integrate map markers for treasure maps etc
+- [x] Integrate map markers for treasure maps etc
+- [ ] Make config options (Max markers, focus area etc)
 
 ## Controls
 
-Everything revolves around the `Use` key. It defaults to the grave key `
+Everything revolves around the `Use` key. It defaults to the grave key `` ` ``
 
 Pressing the `Use` key and releasing it without doing anything will place down a new Marker.
+
+Pressing the `Use` key and releasing it while holding a filled map will place a Marker for every player, banner, and tracking point (monument, treasure, mansion).
 
 Holding the `Use` key and left clicking, or punching, a Marker will delete it.
 
