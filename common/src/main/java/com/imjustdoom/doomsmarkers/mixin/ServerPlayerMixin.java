@@ -47,6 +47,8 @@ public abstract class ServerPlayerMixin extends LivingEntity {
         Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, DoomsMarkers.MARKERS.get(player))
                 .getOrThrow(false, err -> System.err.println("Save encode error: " + err));
         compoundTag.put("Markers", encodedList);
+
+        DoomsMarkers.MARKERS.remove(player);
     }
 
     @Inject(at = @At("TAIL"), method = "readAdditionalSaveData")

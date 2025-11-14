@@ -47,7 +47,6 @@ public abstract class ServerPacketListenerMixin {
         SWITCH:
         switch (location.getPath()) {
             case "add" -> {
-                System.out.println(DoomsMarkers.MARKERS);
                 if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
                     getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
                     break;
