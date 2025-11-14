@@ -43,7 +43,7 @@ public abstract class MinecraftClientMixin {
                 minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.CALCULATE_MAP_MARKER_PACKET, new FriendlyByteBuf(Unpooled.buffer())));
             } else {
                 Vec3 pos = minecraft.player.position();
-                Marker marker = new Marker(new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 2);
+                Marker marker = new Marker(new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 1);
                 DoomsMarkersClient.sendMarkerToServer(marker);
             }
         }

@@ -41,6 +41,7 @@ public class DoomsMarkers {
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/monster_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/square_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/grave_marker.png"));
+        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/skele_marker.png"));
     }
 
     public static float[] argbIntToFloatArray(int color) {
