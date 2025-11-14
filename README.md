@@ -12,7 +12,7 @@ Doom's Markers is a mod that adds similar functionality to map mods "Waypoints" 
 
 ## Controls
 
-Everything revolves around the `Use` key. It defaults to the grave key `` ` ``
+Most things revolves around the `Use` key. It defaults to the grave key `` ` ``
 
 Pressing the `Use` key and releasing it without doing anything will place down a new Marker.
 
@@ -25,3 +25,5 @@ Holding the `Use` key and middle clicking with the mouse on a Marker while holdi
 Holding the `Use` key and scrolling with the wheel will scroll through the built in Marker icons.
 
 Holding the `Use` key and right clicking on a Marker while holding a Dye with dye the Marker that colour.
+
+There is also a toggle key which defaults to `M` to toggle if the Markers should be visible or not.
