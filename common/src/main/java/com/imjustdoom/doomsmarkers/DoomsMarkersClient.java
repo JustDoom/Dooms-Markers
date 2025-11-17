@@ -71,14 +71,24 @@ public class DoomsMarkersClient {
             float screenX = (float) ((context.guiWidth() / 2.0f) * (1.0f + clipPos.x / clipPos.w));
             float screenY = (float) ((context.guiHeight() / 2.0f) * (1.0f - clipPos.y / clipPos.w));
 
+            double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
+            String distanceText = String.format("%.0fm", distance);
+
+            float scale = 1f;
+            if (distance <= 10) {
+                scale = 1f + (1f - (float) (distance / 10));
+            }
+
             // Don't render if off screen
-            if (screenX < -8 || screenX > context.guiWidth() + 8 || screenY < -8 || screenY > context.guiHeight() + 8) {
+            float size = 16 * scale;
+            if (screenX < -size || screenX > context.guiWidth() + size || screenY < -size || screenY > context.guiHeight() + size) {
                 continue;
             }
 
             // Check if the crosshair is over a marker
-            boolean focused = screenX > context.guiWidth() / 2f - 12 && screenX < context.guiWidth() / 2f + 12
-                    && screenY > context.guiHeight() / 2f - 12 && screenY < context.guiHeight() / 2f + 12;
+            float focusArea = 16 * scale / 1.5f;
+            boolean focused = screenX > context.guiWidth() / 2f - focusArea && screenX < context.guiWidth() / 2f + focusArea
+                    && screenY > context.guiHeight() / 2f - focusArea && screenY < context.guiHeight() / 2f + focusArea;
 
             if (focused) {
                 FOCUSED_MARKERS.add(marker);
@@ -124,12 +134,10 @@ public class DoomsMarkersClient {
                 }
             }
 
-            double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
-            String distanceText = String.format("%.0fm", distance);
-
             PoseStack pose = context.pose();
             pose.pushPose();
-            pose.translate(screenX - 8, screenY - 8, 0);
+            pose.translate(screenX - size / 2f, screenY - size / 2f, 0);
+            pose.scale(scale, scale, 1f);
 
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             if (marker.getIconIndex() == -1) {
