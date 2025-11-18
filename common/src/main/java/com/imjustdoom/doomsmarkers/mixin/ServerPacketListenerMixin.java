@@ -52,11 +52,14 @@ public abstract class ServerPacketListenerMixin {
                 }
                 CompoundTag wrapper = packet.getData().readNbt();
                 if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    CompoundTag compoundTag = wrapper.getCompound("data");
-                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag)
-                            .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
-                    serverPlayer.getMarkers().add(loaded);
-                    DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
+                    try {
+                        CompoundTag compoundTag = wrapper.getCompound("data");
+                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                        serverPlayer.getMarkers().add(loaded);
+                        DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
+                    } catch (Exception e) {
+                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                    }
                 }
             }
             case "calculate_map" -> {
@@ -68,7 +71,7 @@ public abstract class ServerPacketListenerMixin {
 
                 MapItemSavedData data = MapItem.getSavedData(itemStack, getPlayer().level());
                 if (data == null) {
-                    System.out.println("No data to fetch");
+                    DoomsMarkers.LOG.info("No data to fetch");
                     return;
                 }
 
@@ -136,15 +139,18 @@ public abstract class ServerPacketListenerMixin {
             case "update" -> {
                 CompoundTag wrapper = packet.getData().readNbt();
                 if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    CompoundTag compoundTag = wrapper.getCompound("data");
-                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag)
-                            .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
-                    for (Marker marker : serverPlayer.getMarkers()) {
-                        if (marker.getUuid().equals(loaded.getUuid())) {
-                            serverPlayer.getMarkers().remove(marker);
-                            serverPlayer.getMarkers().add(loaded);
-                            break;
+                    try {
+                        CompoundTag compoundTag = wrapper.getCompound("data");
+                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                        for (Marker marker : serverPlayer.getMarkers()) {
+                            if (marker.getUuid().equals(loaded.getUuid())) {
+                                serverPlayer.getMarkers().remove(marker);
+                                serverPlayer.getMarkers().add(loaded);
+                                break;
+                            }
                         }
+                    } catch (Exception e) {
+                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
                     }
                 }
             }

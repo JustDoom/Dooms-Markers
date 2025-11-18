@@ -50,11 +50,14 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             DoomsMarkers.LOG.info("No Markers exist for {} to save", player.getName().getString());
             return;
         }
-        Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, getMarkers())
-                .getOrThrow(false, err -> System.err.println("Save encode error: " + err));
-        compoundTag.put("Markers", encodedList);
 
-        DoomsMarkers.LOG.info("Saved {} markers for {}", getMarkers().size(), player.getName().getString());
+        try {
+            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, getMarkers()).getOrThrow(false, null);
+            compoundTag.put("Markers", encodedList);
+            DoomsMarkers.LOG.info("Saved {} markers for {}", getMarkers().size(), player.getName().getString());
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+        }
     }
 
     @Inject(at = @At("TAIL"), method = "readAdditionalSaveData")
@@ -64,10 +67,14 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             DoomsMarkers.LOG.info("No Markers exist for {}", player.getName().getString());
             return;
         }
-        ListTag markersList = compoundTag.getList("Markers", Tag.TAG_COMPOUND);
-        getMarkers().addAll(Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList)
-                .getOrThrow(false, err -> System.err.println("Load parse error: " + err)));
-        DoomsMarkers.LOG.info("Loaded {} markers for {}", getMarkers().size(), player.getName().getString());
+
+        try {
+            ListTag markersList = compoundTag.getList("Markers", Tag.TAG_COMPOUND);
+            getMarkers().addAll(Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList).getOrThrow(false, null));
+            DoomsMarkers.LOG.info("Loaded {} markers for {}", getMarkers().size(), player.getName().getString());
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+        }
     }
 
     @Override

@@ -14,15 +14,18 @@ public class ServerListener {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, ((ServerPlayerInterface) player).getMarkers())
-                .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
+        try {
+            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, ((ServerPlayerInterface) player).getMarkers()).getOrThrow(false, null);
 
-        CompoundTag wrapper = new CompoundTag();
-        wrapper.put("data", encodedList);
+            CompoundTag wrapper = new CompoundTag();
+            wrapper.put("data", encodedList);
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeNbt(wrapper);
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeNbt(wrapper);
 
-        player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
+            player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+        }
     }
 }

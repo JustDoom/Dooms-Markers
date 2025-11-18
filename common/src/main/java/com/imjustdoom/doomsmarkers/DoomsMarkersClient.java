@@ -108,21 +108,24 @@ public class DoomsMarkersClient {
                         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
                         KEY_USED_THIS_HOLD = true;
 
-                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                                .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
+                        try {
+                            Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
-                        CompoundTag wrapper = new CompoundTag();
-                        wrapper.put("data", encoded);
+                            CompoundTag wrapper = new CompoundTag();
+                            wrapper.put("data", encoded);
 
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeNbt(wrapper);
-                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+                            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                            buf.writeNbt(wrapper);
+                            minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+                        } catch (Exception e) {
+                            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                        }
                     } else if (minecraft.options.keyUse.consumeClick() && minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem() instanceof DyeItem dye) {
                         marker.setColour(DoomsMarkers.argbIntToFloatArray(dye.getDyeColor().getTextColor()));
                         KEY_USED_THIS_HOLD = true;
 
-                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                                .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
+                        try {
+                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
                         CompoundTag wrapper = new CompoundTag();
                         wrapper.put("data", encoded);
@@ -130,6 +133,9 @@ public class DoomsMarkersClient {
                         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                         buf.writeNbt(wrapper);
                         minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+                        } catch (Exception e) {
+                            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                        }
                     }
                 }
             }
@@ -169,15 +175,18 @@ public class DoomsMarkersClient {
             return;
         }
 
-        Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                .getOrThrow(false, err -> System.err.println("Failed to encode marker: " + err));
+        try {
+            Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
-        CompoundTag wrapper = new CompoundTag();
-        wrapper.put("data", encodedMarker);
+            CompoundTag wrapper = new CompoundTag();
+            wrapper.put("data", encodedMarker);
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeNbt(wrapper);
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeNbt(wrapper);
 
-        Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+            Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+        }
     }
 }
