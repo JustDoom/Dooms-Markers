@@ -8,17 +8,13 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-
-import java.util.ArrayList;
 
 public class ServerListener {
     @SubscribeEvent
     public static void onPlayerJoin(PlayerEvent.PlayerLoggedInEvent event) {
         ServerPlayer player = (ServerPlayer) event.getEntity();
-        DoomsMarkers.MARKERS.putIfAbsent(player, new ArrayList<>());
-        Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, DoomsMarkers.MARKERS.get(player))
+        Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, ((ServerPlayerInterface) player).getMarkers())
                 .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
 
         CompoundTag wrapper = new CompoundTag();
@@ -28,10 +24,5 @@ public class ServerListener {
         buf.writeNbt(wrapper);
 
         player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
-    }
-
-    @SubscribeEvent
-    public static void onServerShutdown(ServerStoppingEvent event) {
-        DoomsMarkers.MARKERS.clear();
     }
 }

@@ -4,7 +4,6 @@ import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.CompoundTag;
@@ -12,8 +11,6 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
-
-import java.util.ArrayList;
 
 public class DoomsMarkersFabric implements ModInitializer {
     @Override
@@ -24,8 +21,7 @@ public class DoomsMarkersFabric implements ModInitializer {
         }
 
         ServerPlayConnectionEvents.INIT.register((listener, server) -> {
-            DoomsMarkers.MARKERS.putIfAbsent(listener.getPlayer(), new ArrayList<>());
-            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, DoomsMarkers.MARKERS.get(listener.getPlayer()))
+            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, ((ServerPlayerInterface) listener.getPlayer()).getMarkers())
                     .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
 
             CompoundTag wrapper = new CompoundTag();
@@ -35,10 +31,6 @@ public class DoomsMarkersFabric implements ModInitializer {
             buf.writeNbt(wrapper);
 
             listener.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
-        });
-
-        ServerLifecycleEvents.SERVER_STOPPING.register((event) -> {
-            DoomsMarkers.MARKERS.clear();
         });
 
         DoomsMarkers.init();

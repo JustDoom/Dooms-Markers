@@ -31,7 +31,6 @@ public class DoomsMarkers {
     public static final ResourceLocation UPDATE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "update");
 
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
-    public static final Map<ServerPlayer, List<Marker>> MARKERS = new HashMap<>();
 
     public static final int MAX_MARKERS_PER_PLAYER = 50;
 
