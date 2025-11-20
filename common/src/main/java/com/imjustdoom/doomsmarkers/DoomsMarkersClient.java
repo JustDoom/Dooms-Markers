@@ -56,7 +56,7 @@ public class DoomsMarkersClient {
                 .rotate(Axis.YP.rotationDegrees(camera.getYRot() + 180.0f))
                 .translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        double fov = minecraft.options.fov().get() * minecraft.player.getFieldOfViewModifier();
+        double fov = minecraft.options.fov().get(); // * minecraft.player.getFieldOfViewModifier();
         Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
         for (Marker marker : new ArrayList<>(DoomsMarkersClient.MARKERS)) {
