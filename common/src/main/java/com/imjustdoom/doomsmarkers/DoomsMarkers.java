@@ -31,7 +31,6 @@ public class DoomsMarkers {
     public static final ResourceLocation UPDATE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "update");
 
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
-    public static final Map<ServerPlayer, List<Marker>> MARKERS = new HashMap<>();
 
     public static final int MAX_MARKERS_PER_PLAYER = 50;
 
@@ -54,16 +53,19 @@ public class DoomsMarkers {
     }
 
     public static void sendMarkerToPlayer(ServerPlayer player, Marker marker) {
-        Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                .getOrThrow(false, err -> System.err.println("Failed to encode marker: " + err));
+        try {
+            Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
-        CompoundTag wrapper = new CompoundTag();
-        wrapper.put("data", encodedMarker);
+            CompoundTag wrapper = new CompoundTag();
+            wrapper.put("data", encodedMarker);
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeNbt(wrapper);
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeNbt(wrapper);
 
-        player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+            player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+        }
     }
 
     public static Vec3 getWorldPosFromDecoration(MapItemSavedData mapData, MapDecoration decoration) {

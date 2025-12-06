@@ -56,7 +56,7 @@ public class DoomsMarkersClient {
                 .rotate(Axis.YP.rotationDegrees(camera.getYRot() + 180.0f))
                 .translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        double fov = minecraft.options.fov().get() * minecraft.player.getFieldOfViewModifier();
+        double fov = minecraft.options.fov().get(); // * minecraft.player.getFieldOfViewModifier();
         Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
         for (Marker marker : new ArrayList<>(DoomsMarkersClient.MARKERS)) {
@@ -71,14 +71,24 @@ public class DoomsMarkersClient {
             float screenX = (float) ((context.guiWidth() / 2.0f) * (1.0f + clipPos.x / clipPos.w));
             float screenY = (float) ((context.guiHeight() / 2.0f) * (1.0f - clipPos.y / clipPos.w));
 
+            double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
+            String distanceText = String.format("%.0fm", distance);
+
+            float scale = 1f;
+            if (distance <= 10) {
+                scale = 1f + (1f - (float) (distance / 10));
+            }
+
             // Don't render if off screen
-            if (screenX < -8 || screenX > context.guiWidth() + 8 || screenY < -8 || screenY > context.guiHeight() + 8) {
+            float size = 16 * scale;
+            if (screenX < -size || screenX > context.guiWidth() + size || screenY < -size || screenY > context.guiHeight() + size) {
                 continue;
             }
 
             // Check if the crosshair is over a marker
-            boolean focused = screenX > context.guiWidth() / 2f - 12 && screenX < context.guiWidth() / 2f + 12
-                    && screenY > context.guiHeight() / 2f - 12 && screenY < context.guiHeight() / 2f + 12;
+            float focusArea = 16 * scale / 1.5f;
+            boolean focused = screenX > context.guiWidth() / 2f - focusArea && screenX < context.guiWidth() / 2f + focusArea
+                    && screenY > context.guiHeight() / 2f - focusArea && screenY < context.guiHeight() / 2f + focusArea;
 
             if (focused) {
                 FOCUSED_MARKERS.add(marker);
@@ -98,21 +108,24 @@ public class DoomsMarkersClient {
                         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
                         KEY_USED_THIS_HOLD = true;
 
-                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                                .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
+                        try {
+                            Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
-                        CompoundTag wrapper = new CompoundTag();
-                        wrapper.put("data", encoded);
+                            CompoundTag wrapper = new CompoundTag();
+                            wrapper.put("data", encoded);
 
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeNbt(wrapper);
-                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+                            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+                            buf.writeNbt(wrapper);
+                            minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+                        } catch (Exception e) {
+                            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                        }
                     } else if (minecraft.options.keyUse.consumeClick() && minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem() instanceof DyeItem dye) {
                         marker.setColour(DoomsMarkers.argbIntToFloatArray(dye.getDyeColor().getTextColor()));
                         KEY_USED_THIS_HOLD = true;
 
-                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                                .getOrThrow(false, err -> System.err.println("Failed to encode markers: " + err));
+                        try {
+                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
                         CompoundTag wrapper = new CompoundTag();
                         wrapper.put("data", encoded);
@@ -120,20 +133,21 @@ public class DoomsMarkersClient {
                         FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                         buf.writeNbt(wrapper);
                         minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+                        } catch (Exception e) {
+                            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                        }
                     }
                 }
             }
 
-            double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
-            String distanceText = String.format("%.0fm", distance);
-
             PoseStack pose = context.pose();
             pose.pushPose();
-            pose.translate(screenX - 8, screenY - 8, 0);
+            pose.translate(screenX - size / 2f, screenY - size / 2f, 0);
+            pose.scale(scale, scale, 1f);
 
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
             if (marker.getIconIndex() == -1) {
-                RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 1 / 2f);
+                RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 0.5f);
                 context.renderItem(marker.getItemIcon(), 0, 0);
                 RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
             } else {
@@ -161,15 +175,18 @@ public class DoomsMarkersClient {
             return;
         }
 
-        Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker)
-                .getOrThrow(false, err -> System.err.println("Failed to encode marker: " + err));
+        try {
+            Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
-        CompoundTag wrapper = new CompoundTag();
-        wrapper.put("data", encodedMarker);
+            CompoundTag wrapper = new CompoundTag();
+            wrapper.put("data", encodedMarker);
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeNbt(wrapper);
+            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+            buf.writeNbt(wrapper);
 
-        Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+            Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+        }
     }
 }

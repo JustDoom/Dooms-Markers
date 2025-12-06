@@ -2,6 +2,7 @@ package com.imjustdoom.doomsmarkers.mixin;
 
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -40,24 +41,25 @@ public abstract class ServerPacketListenerMixin {
             return;
         }
 
-        if (!DoomsMarkers.MARKERS.containsKey(getPlayer())) {
-            DoomsMarkers.MARKERS.put(getPlayer(), new ArrayList<>());
-        }
+        ServerPlayerInterface serverPlayer = (ServerPlayerInterface) getPlayer();
 
         SWITCH:
         switch (location.getPath()) {
             case "add" -> {
-                if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
+                if (serverPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
                     getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
                     break;
                 }
                 CompoundTag wrapper = packet.getData().readNbt();
                 if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    CompoundTag compoundTag = wrapper.getCompound("data");
-                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag)
-                            .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
-                    DoomsMarkers.MARKERS.get(getPlayer()).add(loaded);
-                    DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
+                    try {
+                        CompoundTag compoundTag = wrapper.getCompound("data");
+                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                        serverPlayer.getMarkers().add(loaded);
+                        DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
+                    } catch (Exception e) {
+                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                    }
                 }
             }
             case "calculate_map" -> {
@@ -69,12 +71,12 @@ public abstract class ServerPacketListenerMixin {
 
                 MapItemSavedData data = MapItem.getSavedData(itemStack, getPlayer().level());
                 if (data == null) {
-                    System.out.println("No data to fetch");
+                    DoomsMarkers.LOG.info("No data to fetch");
                     return;
                 }
 
                 for (MapBanner banner : data.getBanners()) {
-                    if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
+                    if (serverPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
                         getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
                         break SWITCH;
                     }
@@ -85,13 +87,13 @@ public abstract class ServerPacketListenerMixin {
                     }
 
                     Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2);
-                    DoomsMarkers.MARKERS.get(getPlayer()).add(marker);
+                    serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
                 }
 
                 for (MapDecoration decoration : data.getDecorations()) {
-                    if (DoomsMarkers.MARKERS.get(getPlayer()).size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
+                    if (serverPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
                         getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
                         break SWITCH;
                     }
@@ -117,7 +119,7 @@ public abstract class ServerPacketListenerMixin {
                         colour = List.of(1f, 1f, 1f, 1f);
                     }
                     Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2);
-                    DoomsMarkers.MARKERS.get(getPlayer()).add(marker);
+                    serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
                 }
@@ -126,9 +128,9 @@ public abstract class ServerPacketListenerMixin {
                 CompoundTag wrapper = packet.getData().readNbt();
                 if (wrapper != null && wrapper.contains("uuid", Tag.TAG_STRING)) {
                     UUID uuid = UUID.fromString(wrapper.getString("uuid"));
-                    for (Marker marker : DoomsMarkers.MARKERS.get(getPlayer())) {
+                    for (Marker marker : serverPlayer.getMarkers()) {
                         if (marker.getUuid().equals(uuid)) {
-                            DoomsMarkers.MARKERS.get(getPlayer()).remove(marker);
+                            serverPlayer.getMarkers().remove(marker);
                             break;
                         }
                     }
@@ -137,15 +139,18 @@ public abstract class ServerPacketListenerMixin {
             case "update" -> {
                 CompoundTag wrapper = packet.getData().readNbt();
                 if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    CompoundTag compoundTag = wrapper.getCompound("data");
-                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag)
-                            .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
-                    for (Marker marker : DoomsMarkers.MARKERS.get(getPlayer())) {
-                        if (marker.getUuid().equals(loaded.getUuid())) {
-                            DoomsMarkers.MARKERS.get(getPlayer()).remove(marker);
-                            DoomsMarkers.MARKERS.get(getPlayer()).add(loaded);
-                            break;
+                    try {
+                        CompoundTag compoundTag = wrapper.getCompound("data");
+                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                        for (Marker marker : serverPlayer.getMarkers()) {
+                            if (marker.getUuid().equals(loaded.getUuid())) {
+                                serverPlayer.getMarkers().remove(marker);
+                                serverPlayer.getMarkers().add(loaded);
+                                break;
+                            }
                         }
+                    } catch (Exception e) {
+                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
                     }
                 }
             }

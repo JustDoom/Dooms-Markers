@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
+import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -29,19 +30,25 @@ public abstract class ClientPacketListenerMixin {
         if (location.getPath().equals("marker")) {
             CompoundTag wrapper = packet.getData().readNbt();
             if (wrapper != null && wrapper.contains("data", Tag.TAG_LIST)) {
-                ListTag dataList = wrapper.getList("data", Tag.TAG_COMPOUND);
-                List<Marker> loaded = Marker.CODEC.listOf().parse(NbtOps.INSTANCE, dataList)
-                        .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
-                DoomsMarkersClient.MARKERS.clear();
-                DoomsMarkersClient.MARKERS.addAll(loaded);
+                try {
+                    ListTag dataList = wrapper.getList("data", Tag.TAG_COMPOUND);
+                    List<Marker> loaded = Marker.CODEC.listOf().parse(NbtOps.INSTANCE, dataList).getOrThrow(false, null);
+                    DoomsMarkersClient.MARKERS.clear();
+                    DoomsMarkersClient.MARKERS.addAll(loaded);
+                } catch (Exception e) {
+                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                }
             }
         } else if (location.getPath().equals("add")) {
             CompoundTag wrapper = packet.getData().readNbt();
             if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                CompoundTag compoundTag = wrapper.getCompound("data");
-                Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag)
-                        .getOrThrow(false, err -> System.err.println("Failed to parse markers: " + err));
-                DoomsMarkersClient.MARKERS.add(loaded);
+                try {
+                    CompoundTag compoundTag = wrapper.getCompound("data");
+                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                    DoomsMarkersClient.MARKERS.add(loaded);
+                } catch (Exception e) {
+                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                }
             }
         }
 
