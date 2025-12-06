@@ -1,16 +1,15 @@
 package com.imjustdoom.doomsmarkers;
 
-import io.netty.buffer.Unpooled;
+import com.imjustdoom.doomsmarkers.payload.*;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+
+import java.util.List;
 
 public class DoomsMarkersFabric implements ModInitializer {
     @Override
@@ -20,20 +19,19 @@ public class DoomsMarkersFabric implements ModInitializer {
             KeyBindingHelper.registerKeyBinding(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
         }
 
+        PayloadTypeRegistry.playS2C().register(ClientboundAddMarkerPayload.ID, ClientboundAddMarkerPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(ClientboundMarkerSyncPayload.ID, ClientboundMarkerSyncPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(ClientboundUpdateMarkerPayload.ID, ClientboundUpdateMarkerPayload.CODEC);
+
+        PayloadTypeRegistry.playC2S().register(ServerboundAddMarkerPayload.ID, ServerboundAddMarkerPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(ServerboundCalculateMapPayload.ID, ServerboundCalculateMapPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(ServerboundDeleteMarkerPayload.ID, ServerboundDeleteMarkerPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(ServerboundUpdateMarkerPayload.ID, ServerboundUpdateMarkerPayload.CODEC);
+
         ServerPlayConnectionEvents.INIT.register((listener, server) -> {
-            try {
-                Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, ((ServerPlayerInterface) listener.getPlayer()).getMarkers()).getOrThrow(false, null);
-
-                CompoundTag wrapper = new CompoundTag();
-                wrapper.put("data", encodedList);
-
-                FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                buf.writeNbt(wrapper);
-
-                listener.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
-            } catch (Exception e) {
-                DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-            }
+            List<Marker> markers = ((ServerPlayerInterface) listener.getPlayer()).getMarkers();
+            ClientboundMarkerSyncPayload sync = new ClientboundMarkerSyncPayload(markers);
+            listener.send(new ClientboundCustomPayloadPacket(sync));
         });
 
         DoomsMarkers.init();

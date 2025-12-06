@@ -52,7 +52,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
         }
 
         try {
-            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, getMarkers()).getOrThrow(false, null);
+            Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, getMarkers()).getOrThrow();
             compoundTag.put("Markers", encodedList);
             DoomsMarkers.LOG.info("Saved {} markers for {}", getMarkers().size(), player.getName().getString());
         } catch (Exception e) {
@@ -70,10 +70,11 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
 
         try {
             ListTag markersList = compoundTag.getList("Markers", Tag.TAG_COMPOUND);
-            getMarkers().addAll(Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList).getOrThrow(false, null));
+            getMarkers().addAll(Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList).getOrThrow());
             DoomsMarkers.LOG.info("Loaded {} markers for {}", getMarkers().size(), player.getName().getString());
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to decode the Markers: {}", e.getMessage());
+            e.printStackTrace();
         }
     }
 

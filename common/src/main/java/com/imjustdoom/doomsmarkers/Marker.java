@@ -1,10 +1,17 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -12,16 +19,39 @@ import java.util.List;
 import java.util.UUID;
 
 public class Marker {
+    public static final Codec<ItemStack> CUSTOM_ITEMSTACK_CODEC = new Codec<>() {
+        @Override
+        public <T> DataResult<Pair<ItemStack, T>> decode(DynamicOps<T> ops, T input) {
+            DataResult<Pair<ItemStack, T>> result = ItemStack.OPTIONAL_CODEC.decode(ops, input);
+            return DataResult.success(result.resultOrPartial(errorMsg -> {
+            }).orElse(Pair.of(ItemStack.EMPTY, input)));
+        }
+
+        @Override
+        public <T> DataResult<T> encode(ItemStack stack, DynamicOps<T> ops, T prefix) {
+            return ItemStack.OPTIONAL_CODEC.encode(stack, ops, prefix);
+        }
+    };
+
     public static Codec<Marker> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.fieldOf("uuid").forGetter(Marker::getUuid),
             Vec3.CODEC.fieldOf("position").forGetter(Marker::getPosition),
             Codec.FLOAT.listOf().fieldOf("colour").forGetter(Marker::getColour),
             Codec.INT.fieldOf("iconIndex").forGetter(Marker::getIconIndex),
-            ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon)
+            CUSTOM_ITEMSTACK_CODEC.optionalFieldOf("itemIcon", ItemStack.EMPTY).forGetter(Marker::getItemIcon)
     ).apply(instance, Marker::new));
 
-    private UUID uuid;
-    private Vec3 position;
+    public static final StreamCodec<RegistryFriendlyByteBuf, Marker> STREAM_CODEC = StreamCodec.composite(
+            UUIDUtil.STREAM_CODEC, Marker::getUuid,
+            ByteBufCodecs.fromCodec(Vec3.CODEC), Marker::getPosition,
+            ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.FLOAT), Marker::getColour,
+            ByteBufCodecs.VAR_INT, Marker::getIconIndex,
+            ItemStack.OPTIONAL_STREAM_CODEC, Marker::getItemIcon,
+            Marker::new
+    );
+
+    private final UUID uuid;
+    private final Vec3 position;
     private List<Float> colour;
     private int iconIndex;
     private ItemStack itemIcon;
@@ -43,7 +73,7 @@ public class Marker {
         this.position = position;
         this.colour = colour;
         this.iconIndex = iconIndex;
-        this.itemIcon = itemIcon;
+        this.itemIcon = itemIcon.isEmpty() || itemIcon.is(Items.AIR) ? ItemStack.EMPTY : itemIcon;
     }
 
     public UUID getUuid() {
@@ -98,6 +128,6 @@ public class Marker {
 
     @Override
     public String toString() {
-        return getPosition().toString() + ", " + getColour() + ", " + getIconIndex();
+        return getPosition().toString() + ", " + getColour() + ", " + getIconIndex() + ", " + getItemIcon() + ", " + getUuid();
     }
 }

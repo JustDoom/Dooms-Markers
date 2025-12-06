@@ -4,6 +4,7 @@ import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 @Mod(DoomsMarkers.MOD_ID)
@@ -16,6 +17,10 @@ public class DoomsMarkersForge {
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
             event.register(DoomsMarkersClient.MARKER_KEY_MAPPING);
             event.register(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
+        });
+
+        modBus.addListener((FMLCommonSetupEvent event) -> {
+
         });
 
         DoomsMarkers.init();

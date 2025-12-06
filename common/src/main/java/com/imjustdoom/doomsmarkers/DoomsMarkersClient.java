@@ -1,21 +1,19 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.imjustdoom.doomsmarkers.payload.ServerboundAddMarkerPayload;
+import com.imjustdoom.doomsmarkers.payload.ServerboundDeleteMarkerPayload;
+import com.imjustdoom.doomsmarkers.payload.ServerboundUpdateMarkerPayload;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import io.netty.buffer.Unpooled;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeItem;
 import org.joml.Matrix4f;
@@ -96,46 +94,16 @@ public class DoomsMarkersClient {
                     if (minecraft.options.keyAttack.consumeClick()) {
                         DoomsMarkersClient.MARKERS.remove(marker);
                         KEY_USED_THIS_HOLD = true;
-
-                        CompoundTag wrapper = new CompoundTag();
-                        wrapper.putString("uuid", marker.getUuid().toString());
-
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeNbt(wrapper);
-                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.DELETE_MARKER_PACKET, buf));
+                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(new ServerboundDeleteMarkerPayload(marker.getUuid())));
                     } else if (minecraft.options.keyPickItem.consumeClick()) {
                         marker.setIconIndex(-1);
                         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
                         KEY_USED_THIS_HOLD = true;
-
-                        try {
-                            Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
-
-                            CompoundTag wrapper = new CompoundTag();
-                            wrapper.put("data", encoded);
-
-                            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                            buf.writeNbt(wrapper);
-                            minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
-                        } catch (Exception e) {
-                            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-                        }
+                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(new ServerboundUpdateMarkerPayload(marker)));
                     } else if (minecraft.options.keyUse.consumeClick() && minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem() instanceof DyeItem dye) {
                         marker.setColour(DoomsMarkers.argbIntToFloatArray(dye.getDyeColor().getTextColor()));
                         KEY_USED_THIS_HOLD = true;
-
-                        try {
-                        Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
-
-                        CompoundTag wrapper = new CompoundTag();
-                        wrapper.put("data", encoded);
-
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeNbt(wrapper);
-                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
-                        } catch (Exception e) {
-                            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-                        }
+                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(new ServerboundUpdateMarkerPayload(marker)));
                     }
                 }
             }
@@ -175,18 +143,6 @@ public class DoomsMarkersClient {
             return;
         }
 
-        try {
-            Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
-
-            CompoundTag wrapper = new CompoundTag();
-            wrapper.put("data", encodedMarker);
-
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeNbt(wrapper);
-
-            Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
-        } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-        }
+        Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(new ServerboundAddMarkerPayload(marker)));
     }
 }

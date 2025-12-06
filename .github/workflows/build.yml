@@ -1,7 +1,7 @@
 name: Build
 on:
   push:
-    branches: [ 1.20.1 ]
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -12,7 +12,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: "17"
+          java-version: "21"
           distribution: "temurin"
       - name: Build with gradle
         run: ./gradlew clean build
@@ -23,3 +23,4 @@ jobs:
           path: |
             fabric/build/libs/*.jar
             forge/build/libs/*.jar
+            neoforge/build/libs/*.jar

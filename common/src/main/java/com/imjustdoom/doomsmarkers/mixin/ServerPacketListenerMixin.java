@@ -3,13 +3,13 @@ package com.imjustdoom.doomsmarkers.mixin;
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
 import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
+import com.imjustdoom.doomsmarkers.payload.ServerboundAddMarkerPayload;
+import com.imjustdoom.doomsmarkers.payload.ServerboundCalculateMapPayload;
+import com.imjustdoom.doomsmarkers.payload.ServerboundDeleteMarkerPayload;
+import com.imjustdoom.doomsmarkers.payload.ServerboundUpdateMarkerPayload;
 import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
@@ -17,6 +17,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.level.saveddata.maps.MapBanner;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
+import net.minecraft.world.level.saveddata.maps.MapDecorationTypes;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Mixin(value = ServerGamePacketListenerImpl.class)
 public abstract class ServerPacketListenerMixin {
@@ -36,33 +36,20 @@ public abstract class ServerPacketListenerMixin {
 
     @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
     public void handleMyPackets(ServerboundCustomPayloadPacket packet, CallbackInfo ci) {
-        ResourceLocation location = packet.getIdentifier();
-        if (!location.getNamespace().equals("doomsmarkers")) {
-            return;
-        }
-
         ServerPlayerInterface serverPlayer = (ServerPlayerInterface) getPlayer();
 
         SWITCH:
-        switch (location.getPath()) {
-            case "add" -> {
+        switch (packet.payload()) {
+            case ServerboundAddMarkerPayload addMarkerPayload -> {
                 if (serverPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
                     getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
                     break;
                 }
-                CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    try {
-                        CompoundTag compoundTag = wrapper.getCompound("data");
-                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
-                        serverPlayer.getMarkers().add(loaded);
-                        DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
-                    } catch (Exception e) {
-                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-                    }
-                }
+
+                serverPlayer.getMarkers().add(addMarkerPayload.marker());
+                DoomsMarkers.sendMarkerToPlayer(getPlayer(), addMarkerPayload.marker());
             }
-            case "calculate_map" -> {
+            case ServerboundCalculateMapPayload ignored -> {
                 ItemStack itemStack = getPlayer().getItemInHand(getPlayer().getUsedItemHand());
                 if (itemStack.getItem() != Items.FILLED_MAP) {
                     getPlayer().sendSystemMessage(Component.literal("Unable to detect map item").withStyle(ChatFormatting.RED));
@@ -82,11 +69,11 @@ public abstract class ServerPacketListenerMixin {
                     }
 
                     List<Float> colour = new ArrayList<>();
-                    for (float value : DoomsMarkers.argbIntToFloatArray(banner.getColor().getTextColor())) {
+                    for (float value : DoomsMarkers.argbIntToFloatArray(banner.color().getTextColor())) {
                         colour.add(value);
                     }
 
-                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2);
+                    Marker marker = new Marker(new Vec3(banner.pos().getX(), banner.pos().getY() + 0.75f, banner.pos().getZ()), colour, 2);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -98,21 +85,21 @@ public abstract class ServerPacketListenerMixin {
                         break SWITCH;
                     }
 
-                    if (decoration.getType() != MapDecoration.Type.RED_X
-                            && decoration.getType() != MapDecoration.Type.MONUMENT
-                            && decoration.getType() != MapDecoration.Type.MANSION
-                            && decoration.getType() != MapDecoration.Type.TARGET_POINT
-                            && decoration.getType() != MapDecoration.Type.TARGET_X
-                            && decoration.getType() != MapDecoration.Type.BLUE_MARKER
-                            && decoration.getType() != MapDecoration.Type.RED_MARKER
-                            && decoration.getType() != MapDecoration.Type.PLAYER) {
+                    if (decoration.type() != MapDecorationTypes.RED_X
+                            && decoration.type() != MapDecorationTypes.OCEAN_MONUMENT
+                            && decoration.type() != MapDecorationTypes.WOODLAND_MANSION
+                            && decoration.type() != MapDecorationTypes.TARGET_POINT
+                            && decoration.type() != MapDecorationTypes.TARGET_X
+                            && decoration.type() != MapDecorationTypes.BLUE_MARKER
+                            && decoration.type() != MapDecorationTypes.RED_MARKER
+                            && decoration.type() != MapDecorationTypes.PLAYER) {
                         continue;
                     }
 
                     List<Float> colour;
-                    if (decoration.getType().hasMapColor()) {
+                    if (decoration.type().value().hasMapColor()) {
                         colour = new ArrayList<>();
-                        for (float value : DoomsMarkers.argbIntToFloatArray(decoration.getType().getMapColor())) {
+                        for (float value : DoomsMarkers.argbIntToFloatArray(decoration.type().value().mapColor())) {
                             colour.add(value);
                         }
                     } else {
@@ -124,36 +111,24 @@ public abstract class ServerPacketListenerMixin {
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
                 }
             }
-            case "delete" -> {
-                CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper != null && wrapper.contains("uuid", Tag.TAG_STRING)) {
-                    UUID uuid = UUID.fromString(wrapper.getString("uuid"));
-                    for (Marker marker : serverPlayer.getMarkers()) {
-                        if (marker.getUuid().equals(uuid)) {
-                            serverPlayer.getMarkers().remove(marker);
-                            break;
-                        }
+            case ServerboundDeleteMarkerPayload deleteMarkerPayload -> {
+                for (Marker marker : serverPlayer.getMarkers()) {
+                    if (marker.getUuid().equals(deleteMarkerPayload.uuid())) {
+                        serverPlayer.getMarkers().remove(marker);
+                        break;
                     }
                 }
             }
-            case "update" -> {
-                CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    try {
-                        CompoundTag compoundTag = wrapper.getCompound("data");
-                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
-                        for (Marker marker : serverPlayer.getMarkers()) {
-                            if (marker.getUuid().equals(loaded.getUuid())) {
-                                serverPlayer.getMarkers().remove(marker);
-                                serverPlayer.getMarkers().add(loaded);
-                                break;
-                            }
-                        }
-                    } catch (Exception e) {
-                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            case ServerboundUpdateMarkerPayload updateMarkerPayload -> {
+                for (Marker marker : serverPlayer.getMarkers()) {
+                    if (marker.getUuid().equals(updateMarkerPayload.marker().getUuid())) {
+                        serverPlayer.getMarkers().remove(marker);
+                        serverPlayer.getMarkers().add(updateMarkerPayload.marker());
+                        break;
                     }
                 }
             }
+            default -> {}
         }
 
         ci.cancel();

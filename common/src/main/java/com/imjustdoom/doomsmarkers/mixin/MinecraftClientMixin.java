@@ -1,12 +1,10 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
-import io.netty.buffer.Unpooled;
+import com.imjustdoom.doomsmarkers.payload.ServerboundCalculateMapPayload;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
@@ -44,7 +42,7 @@ public abstract class MinecraftClientMixin {
         if (this.doomsMarkers$markerDownLast && !currentDown && !DoomsMarkersClient.KEY_USED_THIS_HOLD && DoomsMarkersClient.TOGGLED_MARKERS) {
             ItemStack itemStack = minecraft.player.getItemInHand(minecraft.player.getUsedItemHand());
             if (itemStack.getItem() == Items.FILLED_MAP) {
-                minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.CALCULATE_MAP_MARKER_PACKET, new FriendlyByteBuf(Unpooled.buffer())));
+                minecraft.player.connection.send(new ServerboundCustomPayloadPacket(new ServerboundCalculateMapPayload()));
             } else {
                 Vec3 pos = minecraft.player.position();
                 Marker marker = new Marker(new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 1);
