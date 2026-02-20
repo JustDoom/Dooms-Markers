@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.imjustdoom.doomsmarkers.command.Commands;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -8,6 +9,6 @@ import net.minecraftforge.fml.common.Mod;
 public class CommandListener {
     @SubscribeEvent
     public static void onCommandRegister(RegisterCommandsEvent event) {
-        Commands.register(event.getDispatcher(), event.getBuildContext());
+        Commands.register(event.getDispatcher());
     }
 }

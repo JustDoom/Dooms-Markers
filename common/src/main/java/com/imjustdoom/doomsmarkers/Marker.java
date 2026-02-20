@@ -26,6 +26,10 @@ public class Marker {
     private int iconIndex;
     private ItemStack itemIcon;
 
+    public Marker()  {
+        this(null, List.of(1f, 1f, 1f, 1f), 0);
+    }
+
     public Marker(Vec3 position, List<Float> colour, int iconIndex) {
         this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY);
     }
@@ -52,6 +56,10 @@ public class Marker {
 
     public Vec3 getPosition() {
         return this.position;
+    }
+
+    public void setPosition(Vec3 position) {
+        this.position = position;
     }
 
     public List<Float> getColour() {

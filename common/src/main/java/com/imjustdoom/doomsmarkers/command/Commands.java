@@ -1,20 +1,19 @@
-package com.imjustdoom.doomsmarkers;
+package com.imjustdoom.doomsmarkers.command;
 
 import com.google.common.base.Stopwatch;
+import com.imjustdoom.doomsmarkers.DoomsMarkers;
+import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
+import com.imjustdoom.doomsmarkers.command.argument.MarkerArgument;
 import com.mojang.brigadier.CommandDispatcher;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.Util;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.ColorArgument;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceOrTagKeyArgument;
-import net.minecraft.commands.arguments.coordinates.Vec3Argument;
-import net.minecraft.commands.arguments.item.ItemArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.HolderSet;
@@ -23,12 +22,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 import static net.minecraft.commands.Commands.argument;
@@ -40,42 +36,21 @@ public class Commands {
     private static final DynamicCommandExceptionType ERROR_STRUCTURE_INVALID = new DynamicCommandExceptionType((args) ->
             Component.translatable("commands.locate.structure.invalid", args));
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(
                 literal("marker")
                         .requires(source -> source.hasPermission(2))
                         .then(argument("player", EntityArgument.player())
-                                .then(literal("location")
-                                        .then(argument("location", Vec3Argument.vec3())
-                                                //.then(literal("icon")) TODO icon is command
-                                                .then(itemCommandStack(buildContext))
-                                                .executes(Commands::markersItem)) // When player and location is specified
-                                        .executes(Commands::markersMissingLocation)) // Location is missing
-                                .then(literal("structure")
+                                .then(argument("marker", MarkerArgument.marker())
                                         .then(argument("structure", ResourceOrTagKeyArgument.resourceOrTagKey(Registries.STRUCTURE))
-                                                .then(itemCommandStack(buildContext))
-                                                .executes(Commands::markersItem))
-                                        .executes(Commands::markersMissingStructure))
-                                .then(itemCommandStack(buildContext)) // Also allow specifying an item straight onto the player
-                                .executes(Commands::markersItem))
+                                                .executes(Commands::markersItem) // All the info
+                                        )
+                                        .executes(Commands::markersItem) // Specific marker but no structure
+                                )
+                                .executes(Commands::markersItem) // When no marker info is specified. Just use default one
+                        )
                         .executes(Commands::markersMissingPlayer) // When no player is specified
         );
-    }
-
-    private static Optional<? extends HolderSet.ListBacked<Structure>> getHolders(ResourceOrTagKeyArgument.Result<Structure> structure, Registry<Structure> structureRegistry) {
-        return structure.unwrap().map((p_258231_) -> structureRegistry.getHolder(p_258231_).map(HolderSet::direct), structureRegistry::getTag);
-    }
-
-    private static LiteralArgumentBuilder<CommandSourceStack> itemCommandStack(CommandBuildContext buildContext) {
-        return literal("item")
-                .then(argument("item", ItemArgument.item(buildContext))
-                        .then(argument("colour", ColorArgument.color())
-                                .executes(Commands::markersItem))
-                        .executes(Commands::markersItem))
-                .executes(context -> {
-                    context.getSource().sendFailure(Component.literal("Please specify an item"));
-                    return 1;
-                });
     }
 
     private static int markersItem(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -88,42 +63,24 @@ public class Commands {
             return 1;
         }
 
-        // Handle the colour
-        List<Float> colour;
+        // Ensure marker is included otherwise default
+        Marker marker;
         try {
-            Integer colourValue = ColorArgument.getColor(context, "colour").getColor();
-            if (colourValue == null) {
-                throw new IllegalArgumentException("Colour is null");
-            }
-            colour = new ArrayList<>();
-            for (float value : DoomsMarkers.argbIntToFloatArray(colourValue)) {
-                colour.add(value);
-            }
+            marker = MarkerArgument.getMarker(context, "marker");
         } catch (IllegalArgumentException exception) {
-            colour = List.of(1f, 1f, 1f, 1f);
+            marker = new Marker();
         }
 
         // Handle location
-        Vec3 location;
         try {
-            location = Vec3Argument.getVec3(context, "location");
-        } catch (IllegalArgumentException exception) {
-            try {
-                location = markersStructure(context);
-            } catch (IllegalArgumentException exception1) {
-                location = serverPlayer.position().add(0, 0.75f, 0);
+            marker.setPosition(markersStructure(context));
+        } catch (IllegalArgumentException exception1) {
+            if (marker.getPosition() == null) {
+                marker.setPosition(serverPlayer.position().add(0, 0.75f, 0));
             }
         }
 
-        // Handle marker and icon
-        Marker marker;
-        try {
-            Item item = ItemArgument.getItem(context, "item").getItem();
-            marker = new Marker(location, colour, item);
-        } catch (IllegalArgumentException exception) {
-            marker = new Marker(location, colour, 1);
-        }
-
+        // Save marker and send it
         serverPlayerLayer.getMarkers().add(marker);
         DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);
 
@@ -157,13 +114,7 @@ public class Commands {
         return 1;
     }
 
-    private static int markersMissingLocation(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendFailure(Component.literal("Please specify a location to apply the marks to"));
-        return 1;
-    }
-
-    private static int markersMissingStructure(CommandContext<CommandSourceStack> context) {
-        context.getSource().sendFailure(Component.literal("Please specify a structure to apply the marks to"));
-        return 1;
+    private static Optional<? extends HolderSet.ListBacked<Structure>> getHolders(ResourceOrTagKeyArgument.Result<Structure> structure, Registry<Structure> structureRegistry) {
+        return structure.unwrap().map((key) -> structureRegistry.getHolder(key).map(HolderSet::direct), structureRegistry::getTag);
     }
 }
