@@ -41,13 +41,18 @@ public class Commands {
                 literal("marker")
                         .requires(source -> source.hasPermission(2))
                         .then(argument("player", EntityArgument.player())
-                                .then(argument("marker", MarkerArgument.marker())
-                                        .then(argument("structure", ResourceOrTagKeyArgument.resourceOrTagKey(Registries.STRUCTURE))
-                                                .executes(Commands::markersItem) // All the info
+//                                .then(literal("teleport")
+//                                )
+                                .then(literal("add")
+                                        .then(argument("marker", MarkerArgument.marker())
+                                                .then(argument("structure", ResourceOrTagKeyArgument.resourceOrTagKey(Registries.STRUCTURE))
+                                                        .executes(Commands::markersItem) // All the info
+                                                )
+                                                .executes(Commands::markersItem) // Specific marker but no structure
                                         )
-                                        .executes(Commands::markersItem) // Specific marker but no structure
+                                        .executes(Commands::markersItem) // When no marker info is specified. Just use default one
                                 )
-                                .executes(Commands::markersItem) // When no marker info is specified. Just use default one
+                                .executes(Commands::markersMissingAction) // When an action is not specified
                         )
                         .executes(Commands::markersMissingPlayer) // When no player is specified
         );
@@ -111,6 +116,11 @@ public class Commands {
 
     private static int markersMissingPlayer(CommandContext<CommandSourceStack> context) {
         context.getSource().sendFailure(Component.literal("Please specify a player to apply the marks to"));
+        return 1;
+    }
+
+    private static int markersMissingAction(CommandContext<CommandSourceStack> context) {
+        context.getSource().sendFailure(Component.literal("Please specify an action to take"));
         return 1;
     }
 
