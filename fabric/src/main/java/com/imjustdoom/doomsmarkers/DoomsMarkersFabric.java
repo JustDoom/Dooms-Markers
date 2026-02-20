@@ -4,6 +4,7 @@ import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.nbt.CompoundTag;
@@ -35,6 +36,8 @@ public class DoomsMarkersFabric implements ModInitializer {
                 DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
             }
         });
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> Commands.register(dispatcher, registryAccess));
 
         DoomsMarkers.init();
     }
