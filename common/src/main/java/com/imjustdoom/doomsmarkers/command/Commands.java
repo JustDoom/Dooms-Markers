@@ -94,6 +94,11 @@ public class Commands {
         serverPlayerLayer.getMarkers().add(marker);
         DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);
 
+        String message = String.format("Successfully created the marker \"%s\" for player %s", marker, serverPlayer.getName().getString());
+        DoomsMarkers.LOG.info(message);
+        context.getSource().sendSuccess(() ->
+                Component.literal(message), false);
+
         return 1;
     }
 

@@ -4,8 +4,10 @@ import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
 import io.netty.buffer.Unpooled;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -33,6 +35,12 @@ public abstract class MinecraftClientMixin {
 
         if (DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING.consumeClick()) {
             DoomsMarkersClient.TOGGLED_MARKERS = !DoomsMarkersClient.TOGGLED_MARKERS;
+            minecraft.player.sendSystemMessage(Component.literal("Toggled Markers ").withStyle(ChatFormatting.RESET)
+                    .append(
+                            Component.literal(DoomsMarkersClient.TOGGLED_MARKERS ? "ON" : "OFF")
+                                    .withStyle(DoomsMarkersClient.TOGGLED_MARKERS ? ChatFormatting.GREEN : ChatFormatting.RED)
+                    )
+            );
         }
 
         boolean currentDown = DoomsMarkersClient.MARKER_KEY_MAPPING.isDown();
