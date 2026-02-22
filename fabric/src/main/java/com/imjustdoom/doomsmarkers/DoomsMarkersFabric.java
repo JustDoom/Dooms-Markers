@@ -44,7 +44,7 @@ public class DoomsMarkersFabric implements ModInitializer {
 
         ArgumentTypeRegistry.registerArgumentType(new ResourceLocation(DoomsMarkers.MOD_ID, "marker"), MarkerArgument.class, new MarkerArgumentInfo());
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> Commands.register(dispatcher));
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> Commands.register(dispatcher, registryAccess));
 
         DoomsMarkers.init();
     }

@@ -5,11 +5,16 @@ import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
+import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -25,16 +30,21 @@ public class MarkerParser {
             new SimpleCommandExceptionType(Component.literal("Invalid number"));
     private static final DynamicCommandExceptionType ERROR_UNKNOWN_ITEM =
             new DynamicCommandExceptionType(item -> Component.literal("Unknown item: " + item));
+    private static final DynamicCommandExceptionType ERROR_UNKNOWN_DIMENSION =
+            new DynamicCommandExceptionType(dimension -> Component.literal("Unknown dimension: " + dimension));
 
     private final StringReader reader;
+    private final CommandBuildContext commandBuildContext;
 
     private Vec3 position;
     private List<Float> colour = List.of(1.0f, 1.0f, 1.0f);
     private int iconIndex = 0;
     private Item itemIcon = Items.AIR;
+    private ResourceKey<Level> dimension;
 
-    public MarkerParser(StringReader reader) {
+    public MarkerParser(StringReader reader, CommandBuildContext context) {
         this.reader = reader;
+        this.commandBuildContext = context;
     }
 
     private Marker parse() throws CommandSyntaxException {
@@ -50,7 +60,7 @@ public class MarkerParser {
             }
         }
 
-        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon);
+        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -100,6 +110,7 @@ public class MarkerParser {
                 this.iconIndex = -1;
                 this.itemIcon = parseItem();
             }
+            case "dim", "dimension" -> this.dimension = parseDimension();
             default -> throw ERROR_UNKNOWN_PROPERTY.create(key);
         }
     }
@@ -177,11 +188,38 @@ public class MarkerParser {
         return BuiltInRegistries.ITEM.get(resourceLocation);
     }
 
+    public ResourceKey<Level> parseDimension() throws CommandSyntaxException {
+        int start = this.reader.getCursor();
+        while (this.reader.canRead() && isItemChar(this.reader.peek())) {
+            this.reader.skip();
+        }
+
+        String dimension = this.reader.getString().substring(start, this.reader.getCursor());
+        ResourceLocation resourceLocation = ResourceLocation.tryParse(dimension);
+
+        if (resourceLocation == null) {
+            this.reader.setCursor(start);
+            throw ERROR_UNKNOWN_DIMENSION.createWithContext(this.reader, dimension);
+        }
+
+        ResourceKey<Level> dimensionKey = ResourceKey.create(Registries.DIMENSION, resourceLocation);
+
+        try {
+            HolderLookup<Level> dimensionRegistry = this.commandBuildContext.holderLookup(Registries.DIMENSION);
+            if (dimensionRegistry.get(dimensionKey).isEmpty()) {
+                this.reader.setCursor(start);
+                throw ERROR_UNKNOWN_DIMENSION.createWithContext(this.reader, dimension);
+            }
+        } catch (Exception ignored) {}
+
+        return dimensionKey;
+    }
+
     private boolean isItemChar(char c) {
         return c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c == ':' || c == '.';
     }
 
-    public static Marker parse(StringReader reader) throws CommandSyntaxException {
-        return new MarkerParser(reader).parse();
+    public static Marker parse(StringReader reader, CommandBuildContext context) throws CommandSyntaxException {
+        return new MarkerParser(reader, context).parse();
     }
 }

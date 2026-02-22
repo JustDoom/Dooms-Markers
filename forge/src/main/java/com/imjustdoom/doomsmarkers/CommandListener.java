@@ -9,6 +9,6 @@ import net.minecraftforge.fml.common.Mod;
 public class CommandListener {
     @SubscribeEvent
     public static void onCommandRegister(RegisterCommandsEvent event) {
-        Commands.register(event.getDispatcher());
+        Commands.register(event.getDispatcher(), event.getBuildContext());
     }
 }

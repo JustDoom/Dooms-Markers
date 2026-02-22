@@ -55,6 +55,7 @@ public abstract class ServerPacketListenerMixin {
                     try {
                         CompoundTag compoundTag = wrapper.getCompound("data");
                         Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                        loaded.setDimension(getPlayer().serverLevel().dimension());
                         serverPlayer.getMarkers().add(loaded);
                         DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
                     } catch (Exception e) {
@@ -86,7 +87,7 @@ public abstract class ServerPacketListenerMixin {
                         colour.add(value);
                     }
 
-                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2);
+                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension());
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -118,7 +119,7 @@ public abstract class ServerPacketListenerMixin {
                     } else {
                         colour = List.of(1f, 1f, 1f, 1f);
                     }
-                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2);
+                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension());
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);

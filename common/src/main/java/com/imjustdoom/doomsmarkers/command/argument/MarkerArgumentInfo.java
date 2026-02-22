@@ -25,7 +25,7 @@ public class MarkerArgumentInfo implements ArgumentTypeInfo<MarkerArgument, Mark
     public final class Template implements ArgumentTypeInfo.Template<MarkerArgument> {
         @Override
         public MarkerArgument instantiate(CommandBuildContext context) {
-            return new MarkerArgument();
+            return new MarkerArgument(context);
         }
 
         @Override

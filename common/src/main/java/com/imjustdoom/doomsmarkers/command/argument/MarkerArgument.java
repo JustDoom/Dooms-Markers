@@ -7,20 +7,24 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import net.minecraft.commands.CommandBuildContext;
 
 import java.util.concurrent.CompletableFuture;
 
 public class MarkerArgument implements ArgumentType<Marker> {
-    public static MarkerArgument marker() {
-        return new MarkerArgument();
+    public static MarkerArgument marker(CommandBuildContext context) {
+        return new MarkerArgument(context);
     }
 
-    public MarkerArgument() {
+    private final CommandBuildContext context;
+
+    public MarkerArgument(CommandBuildContext context) {
+        this.context = context;
     }
 
     @Override
     public Marker parse(StringReader reader) throws CommandSyntaxException {
-        return MarkerParser.parse(reader);
+        return MarkerParser.parse(reader, this.context);
     }
 
     @Override
@@ -29,6 +33,7 @@ public class MarkerArgument implements ArgumentType<Marker> {
             builder.suggest("[pos=0,64,0]");
             builder.suggest("[pos=0,64,0,color=1.0,0.0,0.0]");
             builder.suggest("[pos=0,64,0,icon=0]");
+            builder.suggest("[pos=0,64,0,icon=0,dimension=minecraft:overworld]");
         }
         return builder.buildFuture();
     }

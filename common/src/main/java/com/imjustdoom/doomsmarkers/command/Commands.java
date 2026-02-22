@@ -11,6 +11,7 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.Util;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceOrTagKeyArgument;
@@ -36,7 +37,7 @@ public class Commands {
     private static final DynamicCommandExceptionType ERROR_STRUCTURE_INVALID = new DynamicCommandExceptionType((args) ->
             Component.translatable("commands.locate.structure.invalid", args));
 
-    public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext context) {
         dispatcher.register(
                 literal("marker")
                         .requires(source -> source.hasPermission(2))
@@ -44,7 +45,7 @@ public class Commands {
 //                                .then(literal("teleport")
 //                                )
                                 .then(literal("add")
-                                        .then(argument("marker", MarkerArgument.marker())
+                                        .then(argument("marker", MarkerArgument.marker(context))
                                                 .then(argument("structure", ResourceOrTagKeyArgument.resourceOrTagKey(Registries.STRUCTURE))
                                                         .executes(Commands::markersItem) // All the info
                                                 )
@@ -83,6 +84,10 @@ public class Commands {
             if (marker.getPosition() == null) {
                 marker.setPosition(serverPlayer.position().add(0, 0.75f, 0));
             }
+        }
+
+        if (marker.getDimension() == null) {
+            marker.setDimension(serverPlayer.serverLevel().dimension());
         }
 
         // Save marker and send it

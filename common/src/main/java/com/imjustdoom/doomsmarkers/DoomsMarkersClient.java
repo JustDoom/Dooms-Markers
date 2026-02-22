@@ -16,8 +16,10 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.level.Level;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector4d;
@@ -48,6 +50,7 @@ public class DoomsMarkersClient {
             return;
         }
 
+        ResourceKey<Level> currentDimension = minecraft.level.dimension();
         Camera camera = minecraft.gameRenderer.getMainCamera();
         Vector3f cameraPos = camera.getPosition().toVector3f();
 
@@ -60,6 +63,10 @@ public class DoomsMarkersClient {
         Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
         for (Marker marker : new ArrayList<>(DoomsMarkersClient.MARKERS)) {
+            if (!marker.getDimension().equals(currentDimension)) {
+                continue;
+            }
+
             Vector4d clipPos = new Vector4d(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z, 1.0f);
             clipPos.mul(modelView);
             clipPos.mul(projectionMatrix);

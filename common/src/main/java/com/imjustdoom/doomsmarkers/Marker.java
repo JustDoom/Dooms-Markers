@@ -3,8 +3,10 @@ package com.imjustdoom.doomsmarkers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.ArrayList;
@@ -17,7 +19,8 @@ public class Marker {
             Vec3.CODEC.fieldOf("position").forGetter(Marker::getPosition),
             Codec.FLOAT.listOf().fieldOf("colour").forGetter(Marker::getColour),
             Codec.INT.fieldOf("iconIndex").forGetter(Marker::getIconIndex),
-            ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon)
+            ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon),
+            Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", Level.OVERWORLD).forGetter(Marker::getDimension)
     ).apply(instance, Marker::new));
 
     private UUID uuid;
@@ -25,29 +28,35 @@ public class Marker {
     private List<Float> colour;
     private int iconIndex;
     private ItemStack itemIcon;
+    private ResourceKey<Level> dimension;
 
     public Marker()  {
         this(null, List.of(1f, 1f, 1f, 1f), 0);
     }
 
     public Marker(Vec3 position, List<Float> colour, int iconIndex) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY);
+        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD);
     }
 
-    public Marker(Vec3 position, List<Float> colour, Item itemIcon) {
-        this(position, colour, -1, itemIcon);
+    public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension) {
+        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension);
     }
 
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon) {
-        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon));
+    public Marker(Vec3 position, List<Float> colour, Item itemIcon, ResourceKey<Level> dimension) {
+        this(position, colour, -1, itemIcon, dimension);
     }
 
-    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon) {
+    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension) {
+        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension);
+    }
+
+    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon, ResourceKey<Level> dimension) {
         this.uuid = uuid;
         this.position = position;
         this.colour = colour;
         this.iconIndex = iconIndex;
         this.itemIcon = itemIcon;
+        this.dimension = dimension;
     }
 
     public UUID getUuid() {
@@ -104,8 +113,16 @@ public class Marker {
         this.itemIcon = new ItemStack(itemIcon);
     }
 
+    public ResourceKey<Level> getDimension() {
+        return this.dimension;
+    }
+
+    public void setDimension(ResourceKey<Level> dimension) {
+        this.dimension = dimension;
+    }
+
     @Override
     public String toString() {
-        return getPosition().toString() + ", " + getColour() + ", " + getIconIndex();
+        return getPosition().toString() + ", " + getColour() + ", " + getIconIndex() + ", " + getDimension();
     }
 }
