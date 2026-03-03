@@ -40,7 +40,8 @@ public class MarkerParser {
     private List<Float> colour = List.of(1.0f, 1.0f, 1.0f);
     private int iconIndex = 0;
     private Item itemIcon = Items.AIR;
-    private ResourceKey<Level> dimension;
+    private ResourceKey<Level> dimension; // Leave blank because it will default to the players dimension if null
+    private boolean canPlayerRemove = false;
 
     public MarkerParser(StringReader reader, CommandBuildContext context) {
         this.reader = reader;
@@ -60,7 +61,7 @@ public class MarkerParser {
             }
         }
 
-        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension);
+        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -111,6 +112,7 @@ public class MarkerParser {
                 this.itemIcon = parseItem();
             }
             case "dim", "dimension" -> this.dimension = parseDimension();
+            case "canplayerremove", "playerremove" -> this.canPlayerRemove = parseBoolean();
             default -> throw ERROR_UNKNOWN_PROPERTY.create(key);
         }
     }
@@ -169,6 +171,15 @@ public class MarkerParser {
             this.reader.setCursor(start);
             throw ERROR_INVALID_NUMBER.createWithContext(this.reader);
         }
+    }
+
+    private boolean parseBoolean() {
+        int start = this.reader.getCursor();
+        while (this.reader.canRead() && isItemChar(this.reader.peek())) {
+            this.reader.skip();
+        }
+
+        return Boolean.parseBoolean(this.reader.getString().substring(start, this.reader.getCursor()));
     }
 
     private Item parseItem() throws CommandSyntaxException {

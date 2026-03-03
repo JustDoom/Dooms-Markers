@@ -87,7 +87,7 @@ public abstract class ServerPacketListenerMixin {
                         colour.add(value);
                     }
 
-                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension());
+                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension(), true);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -119,7 +119,7 @@ public abstract class ServerPacketListenerMixin {
                     } else {
                         colour = List.of(1f, 1f, 1f, 1f);
                     }
-                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension());
+                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension(), true);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -139,20 +139,23 @@ public abstract class ServerPacketListenerMixin {
             }
             case "update" -> {
                 CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    try {
-                        CompoundTag compoundTag = wrapper.getCompound("data");
-                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
-                        for (Marker marker : serverPlayer.getMarkers()) {
-                            if (marker.getUuid().equals(loaded.getUuid())) {
-                                serverPlayer.getMarkers().remove(marker);
-                                serverPlayer.getMarkers().add(loaded);
-                                break;
-                            }
+                if (wrapper == null || !wrapper.contains("data", Tag.TAG_COMPOUND)) {
+                    break;
+                }
+
+                try {
+                    CompoundTag compoundTag = wrapper.getCompound("data");
+                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
+                    for (Marker marker : serverPlayer.getMarkers()) {
+                        if (!marker.getUuid().equals(loaded.getUuid()) || !marker.canPlayerRemove()) {
+                            break;
                         }
-                    } catch (Exception e) {
-                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+
+                        serverPlayer.getMarkers().remove(marker);
+                        serverPlayer.getMarkers().add(loaded);
                     }
+                } catch (Exception e) {
+                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
                 }
             }
         }

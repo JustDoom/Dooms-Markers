@@ -101,15 +101,7 @@ public class DoomsMarkersClient {
                 FOCUSED_MARKERS.add(marker);
                 if (MARKER_KEY_MAPPING.isDown()) {
                     if (minecraft.options.keyAttack.consumeClick()) {
-                        DoomsMarkersClient.MARKERS.remove(marker);
-                        KEY_USED_THIS_HOLD = true;
-
-                        CompoundTag wrapper = new CompoundTag();
-                        wrapper.putString("uuid", marker.getUuid().toString());
-
-                        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-                        buf.writeNbt(wrapper);
-                        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.DELETE_MARKER_PACKET, buf));
+                        removeMarker(minecraft, marker);
                     } else if (minecraft.options.keyPickItem.consumeClick()) {
                         marker.setIconIndex(-1);
                         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
@@ -195,5 +187,21 @@ public class DoomsMarkersClient {
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
         }
+    }
+
+    private static void removeMarker(Minecraft minecraft, Marker marker) {
+        if (!marker.canPlayerRemove()) {
+            return;
+        }
+
+        DoomsMarkersClient.MARKERS.remove(marker);
+        KEY_USED_THIS_HOLD = true;
+
+        CompoundTag wrapper = new CompoundTag();
+        wrapper.putString("uuid", marker.getUuid().toString());
+
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        buf.writeNbt(wrapper);
+        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.DELETE_MARKER_PACKET, buf));
     }
 }
