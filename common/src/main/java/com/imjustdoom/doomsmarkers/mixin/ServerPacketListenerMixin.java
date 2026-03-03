@@ -87,7 +87,7 @@ public abstract class ServerPacketListenerMixin {
                         colour.add(value);
                     }
 
-                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension(), true);
+                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension(), true, true);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -119,7 +119,7 @@ public abstract class ServerPacketListenerMixin {
                     } else {
                         colour = List.of(1f, 1f, 1f, 1f);
                     }
-                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension(), true);
+                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension(), true, true);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -130,10 +130,11 @@ public abstract class ServerPacketListenerMixin {
                 if (wrapper != null && wrapper.contains("uuid", Tag.TAG_STRING)) {
                     UUID uuid = UUID.fromString(wrapper.getString("uuid"));
                     for (Marker marker : serverPlayer.getMarkers()) {
-                        if (marker.getUuid().equals(uuid)) {
-                            serverPlayer.getMarkers().remove(marker);
+                        if (!marker.getUuid().equals(uuid) || !marker.canPlayerRemove()) {
                             break;
                         }
+
+                        serverPlayer.getMarkers().remove(marker);
                     }
                 }
             }
@@ -147,7 +148,7 @@ public abstract class ServerPacketListenerMixin {
                     CompoundTag compoundTag = wrapper.getCompound("data");
                     Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
                     for (Marker marker : serverPlayer.getMarkers()) {
-                        if (!marker.getUuid().equals(loaded.getUuid()) || !marker.canPlayerRemove()) {
+                        if (!marker.getUuid().equals(loaded.getUuid()) || !marker.canPlayerCustomise()) {
                             break;
                         }
 

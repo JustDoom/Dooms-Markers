@@ -31,6 +31,11 @@ public class InventoryMixin {
         }
 
         Marker marker = DoomsMarkersClient.FOCUSED_MARKERS.get(0);
+
+        if (!marker.canPlayerCustomise()) {
+            return;
+        }
+
         marker.changeIconIndex(index == -1);
         DoomsMarkersClient.KEY_USED_THIS_HOLD = true;
 

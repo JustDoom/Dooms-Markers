@@ -21,7 +21,8 @@ public class Marker {
             Codec.INT.fieldOf("iconIndex").forGetter(Marker::getIconIndex),
             ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon),
             Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", Level.OVERWORLD).forGetter(Marker::getDimension),
-            Codec.BOOL.optionalFieldOf("canPlayerRemove", true).forGetter(Marker::canPlayerRemove)
+            Codec.BOOL.optionalFieldOf("canPlayerRemove", true).forGetter(Marker::canPlayerRemove),
+            Codec.BOOL.optionalFieldOf("canPlayerCustomise", true).forGetter(Marker::canPlayerCustomise)
     ).apply(instance, Marker::new));
 
     private UUID uuid;
@@ -31,28 +32,29 @@ public class Marker {
     private ItemStack itemIcon;
     private ResourceKey<Level> dimension;
     private boolean canPlayerRemove;
+    private boolean canPlayerCustomise;
 
     public Marker()  {
         this(null, List.of(1f, 1f, 1f, 1f), 0);
     }
 
     public Marker(Vec3 position, List<Float> colour, int iconIndex) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true);
+        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true, true);
     }
 
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension, boolean canPlayerRemove) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove);
+    public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
+        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise);
     }
 
-    public Marker(Vec3 position, List<Float> colour, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove) {
-        this(position, colour, -1, itemIcon, dimension, canPlayerRemove);
+    public Marker(Vec3 position, List<Float> colour, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
+        this(position, colour, -1, itemIcon, dimension, canPlayerRemove, canPlayerCustomise);
     }
 
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove) {
-        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove);
+    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
+        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise);
     }
 
-    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove) {
+    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
         this.uuid = uuid;
         this.position = position;
         this.colour = colour;
@@ -60,6 +62,7 @@ public class Marker {
         this.itemIcon = itemIcon;
         this.dimension = dimension;
         this.canPlayerRemove = canPlayerRemove;
+        this.canPlayerCustomise = canPlayerCustomise;
     }
 
     public UUID getUuid() {
@@ -130,6 +133,14 @@ public class Marker {
 
     public void setCanPlayerRemove(boolean canPlayerRemove) {
         this.canPlayerRemove = canPlayerRemove;
+    }
+
+    public boolean canPlayerCustomise() {
+        return this.canPlayerCustomise;
+    }
+
+    public void setCanPlayerCustomise(boolean canPlayerCustomise) {
+        this.canPlayerCustomise = canPlayerCustomise;
     }
 
     @Override

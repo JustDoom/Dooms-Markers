@@ -41,7 +41,8 @@ public class MarkerParser {
     private int iconIndex = 0;
     private Item itemIcon = Items.AIR;
     private ResourceKey<Level> dimension; // Leave blank because it will default to the players dimension if null
-    private boolean canPlayerRemove = false;
+    private boolean canPlayerRemove = true;
+    private boolean canPlayerCustomise = true;
 
     public MarkerParser(StringReader reader, CommandBuildContext context) {
         this.reader = reader;
@@ -61,7 +62,7 @@ public class MarkerParser {
             }
         }
 
-        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove);
+        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -112,7 +113,8 @@ public class MarkerParser {
                 this.itemIcon = parseItem();
             }
             case "dim", "dimension" -> this.dimension = parseDimension();
-            case "canplayerremove", "playerremove" -> this.canPlayerRemove = parseBoolean();
+            case "canplayerremove", "playerremove", "remove" -> this.canPlayerRemove = parseBoolean();
+            case "canplayercustomise", "playercustomise", "customise" -> this.canPlayerCustomise = parseBoolean();
             default -> throw ERROR_UNKNOWN_PROPERTY.create(key);
         }
     }
