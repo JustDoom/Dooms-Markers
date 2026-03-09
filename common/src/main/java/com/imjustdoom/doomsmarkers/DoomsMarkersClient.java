@@ -83,6 +83,7 @@ public class DoomsMarkersClient {
 
             if (distance <= marker.getRemoveWhenNearby()) {
                 removeMarker(minecraft, marker);
+                continue;
             }
 
             float scale = 1f;

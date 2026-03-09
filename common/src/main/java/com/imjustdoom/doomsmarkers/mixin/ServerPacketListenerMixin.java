@@ -149,17 +149,10 @@ public abstract class ServerPacketListenerMixin {
                         if (distance <= marker.getRemoveWhenNearby()) {
                             serverPlayer.getMarkers().remove(marker);
 
-                            List<Float> colorList = marker.getColour();
-                            int colorInt = DoomsMarkers.floatArrayToRgbInt(colorList);
-
-                            // Debug logging
-                            System.out.println("Color floats: " + colorList);
-                            System.out.println("Color int: " + colorInt);
-                            System.out.println("Color hex: " + Integer.toHexString(colorInt));
-
-                            Component message = Component.literal("You have now reached a Marker!")
-                                    .withStyle(style -> style.withColor(TextColor.fromRgb(colorInt)));
-                            getPlayer().sendSystemMessage(message);
+                            getPlayer().sendSystemMessage(Component.literal("You have now reached a Marker!")
+                                    .withStyle(style -> style.withColor(
+                                            TextColor.fromRgb(
+                                                    DoomsMarkers.floatArrayToRgbInt(marker.getColour())))));
                             break SWITCH;
                         }
                     }
