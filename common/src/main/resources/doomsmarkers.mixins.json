@@ -10,11 +10,10 @@
   ],
   "client": [
     "ClientPacketListenerMixin",
-    "MinecraftClientMixin",
-    "InventoryMixin"
+    "InventoryMixin",
+    "MinecraftClientMixin"
   ],
   "server": [
-
   ],
   "injectors": {
     "defaultRequire": 1

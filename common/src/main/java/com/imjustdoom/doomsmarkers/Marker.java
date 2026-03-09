@@ -22,7 +22,8 @@ public class Marker {
             ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon),
             Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", Level.OVERWORLD).forGetter(Marker::getDimension),
             Codec.BOOL.optionalFieldOf("canPlayerRemove", true).forGetter(Marker::canPlayerRemove),
-            Codec.BOOL.optionalFieldOf("canPlayerCustomise", true).forGetter(Marker::canPlayerCustomise)
+            Codec.BOOL.optionalFieldOf("canPlayerCustomise", true).forGetter(Marker::canPlayerCustomise),
+            Codec.INT.optionalFieldOf("removeWhenNearby", -1).forGetter(Marker::getRemoveWhenNearby)
     ).apply(instance, Marker::new));
 
     private UUID uuid;
@@ -33,28 +34,30 @@ public class Marker {
     private ResourceKey<Level> dimension;
     private boolean canPlayerRemove;
     private boolean canPlayerCustomise;
+    private int removeWhenNearby;
 
     public Marker()  {
         this(null, List.of(1f, 1f, 1f, 1f), 0);
     }
 
     public Marker(Vec3 position, List<Float> colour, int iconIndex) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true, true);
+        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true, true, -1);
     }
 
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise);
+    public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
+        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
-    public Marker(Vec3 position, List<Float> colour, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
-        this(position, colour, -1, itemIcon, dimension, canPlayerRemove, canPlayerCustomise);
+    public Marker(Vec3 position, List<Float> colour, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
+        this(position, colour, -1, itemIcon, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
-        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise);
+    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
+        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
-    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise) {
+    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon,
+                  ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
         this.uuid = uuid;
         this.position = position;
         this.colour = colour;
@@ -63,6 +66,7 @@ public class Marker {
         this.dimension = dimension;
         this.canPlayerRemove = canPlayerRemove;
         this.canPlayerCustomise = canPlayerCustomise;
+        this.removeWhenNearby = removeWhenNearby;
     }
 
     public UUID getUuid() {
@@ -143,8 +147,26 @@ public class Marker {
         this.canPlayerCustomise = canPlayerCustomise;
     }
 
+    public int getRemoveWhenNearby() {
+        return this.removeWhenNearby;
+    }
+
+    public void setRemoveWhenNearby(int removeWhenNearby) {
+        this.removeWhenNearby = removeWhenNearby;
+    }
+
     @Override
     public String toString() {
-        return getPosition().toString() + ", " + getColour() + ", " + getIconIndex() + ", " + getDimension();
+        return "Marker{" +
+                "uuid=" + this.uuid +
+                ", position=" + this.position +
+                ", colour=" + this.colour +
+                ", iconIndex=" + this.iconIndex +
+                ", itemIcon=" + this.itemIcon +
+                ", dimension=" + this.dimension +
+                ", canPlayerRemove=" + this.canPlayerRemove +
+                ", canPlayerCustomise=" + this.canPlayerCustomise +
+                ", removeWhenNearby=" + this.removeWhenNearby +
+                '}';
     }
 }

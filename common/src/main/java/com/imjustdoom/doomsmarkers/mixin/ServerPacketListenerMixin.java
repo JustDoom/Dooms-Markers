@@ -8,8 +8,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +21,7 @@ import net.minecraft.world.level.saveddata.maps.MapBanner;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,6 +36,10 @@ import java.util.UUID;
 public abstract class ServerPacketListenerMixin {
     @Shadow
     public abstract ServerPlayer getPlayer();
+
+    @Shadow
+    @Final
+    private MinecraftServer server;
 
     @Inject(method = "handleCustomPayload", at = @At("HEAD"), cancellable = true)
     public void handleMyPackets(ServerboundCustomPayloadPacket packet, CallbackInfo ci) {
@@ -87,7 +94,7 @@ public abstract class ServerPacketListenerMixin {
                         colour.add(value);
                     }
 
-                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension(), true, true);
+                    Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension(), true, true, -1);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -119,7 +126,7 @@ public abstract class ServerPacketListenerMixin {
                     } else {
                         colour = List.of(1f, 1f, 1f, 1f);
                     }
-                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension(), true, true);
+                    Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(data, decoration), colour, 2, getPlayer().serverLevel().dimension(), true, true, -1);
                     serverPlayer.getMarkers().add(marker);
 
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
@@ -127,15 +134,42 @@ public abstract class ServerPacketListenerMixin {
             }
             case "delete" -> {
                 CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper != null && wrapper.contains("uuid", Tag.TAG_STRING)) {
-                    UUID uuid = UUID.fromString(wrapper.getString("uuid"));
-                    for (Marker marker : serverPlayer.getMarkers()) {
-                        if (!marker.getUuid().equals(uuid) || !marker.canPlayerRemove()) {
-                            break;
-                        }
+                if (wrapper == null || !wrapper.contains("uuid", Tag.TAG_STRING)) {
+                    break;
+                }
 
-                        serverPlayer.getMarkers().remove(marker);
+                UUID uuid = UUID.fromString(wrapper.getString("uuid"));
+                for (Marker marker : serverPlayer.getMarkers()) {
+                    if (!marker.getUuid().equals(uuid)) {
+                        continue;
                     }
+
+                    if (marker.getRemoveWhenNearby() != -1) {
+                        double distance = Math.sqrt(getPlayer().distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
+                        if (distance <= marker.getRemoveWhenNearby()) {
+                            serverPlayer.getMarkers().remove(marker);
+
+                            List<Float> colorList = marker.getColour();
+                            int colorInt = DoomsMarkers.floatArrayToRgbInt(colorList);
+
+                            // Debug logging
+                            System.out.println("Color floats: " + colorList);
+                            System.out.println("Color int: " + colorInt);
+                            System.out.println("Color hex: " + Integer.toHexString(colorInt));
+
+                            Component message = Component.literal("You have now reached a Marker!")
+                                    .withStyle(style -> style.withColor(TextColor.fromRgb(colorInt)));
+                            getPlayer().sendSystemMessage(message);
+                            break SWITCH;
+                        }
+                    }
+
+                    if (!marker.canPlayerRemove()) {
+                        continue;
+                    }
+
+                    serverPlayer.getMarkers().remove(marker);
+                    break SWITCH;
                 }
             }
             case "update" -> {

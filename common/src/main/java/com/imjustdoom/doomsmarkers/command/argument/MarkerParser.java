@@ -43,6 +43,7 @@ public class MarkerParser {
     private ResourceKey<Level> dimension; // Leave blank because it will default to the players dimension if null
     private boolean canPlayerRemove = true;
     private boolean canPlayerCustomise = true;
+    private int removeWhenNearby = -1;
 
     public MarkerParser(StringReader reader, CommandBuildContext context) {
         this.reader = reader;
@@ -62,7 +63,7 @@ public class MarkerParser {
             }
         }
 
-        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise);
+        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise, this.removeWhenNearby);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -115,6 +116,7 @@ public class MarkerParser {
             case "dim", "dimension" -> this.dimension = parseDimension();
             case "canplayerremove", "playerremove", "remove" -> this.canPlayerRemove = parseBoolean();
             case "canplayercustomise", "playercustomise", "customise" -> this.canPlayerCustomise = parseBoolean();
+            case "removewhennearby" -> this.removeWhenNearby = parseInt();
             default -> throw ERROR_UNKNOWN_PROPERTY.create(key);
         }
     }

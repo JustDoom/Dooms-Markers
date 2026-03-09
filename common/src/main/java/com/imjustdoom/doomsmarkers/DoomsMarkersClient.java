@@ -81,6 +81,10 @@ public class DoomsMarkersClient {
             double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
             String distanceText = String.format("%.0fm", distance);
 
+            if (distance <= marker.getRemoveWhenNearby()) {
+                removeMarker(minecraft, marker);
+            }
+
             float scale = 1f;
             if (distance <= 10) {
                 scale = 1f + (1f - (float) (distance / 10));
@@ -101,10 +105,23 @@ public class DoomsMarkersClient {
                 FOCUSED_MARKERS.add(marker);
                 if (MARKER_KEY_MAPPING.isDown()) {
                     if (minecraft.options.keyAttack.consumeClick()) {
+                        if (!marker.canPlayerRemove()) {
+                            return;
+                        }
+
+                        KEY_USED_THIS_HOLD = true;
                         removeMarker(minecraft, marker);
                     } else if (minecraft.options.keyPickItem.consumeClick()) {
+                        if (!marker.canPlayerCustomise()) {
+                            return;
+                        }
+
                         setIcon(minecraft, marker);
                     } else if (minecraft.options.keyUse.consumeClick() && minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem() instanceof DyeItem dye) {
+                        if (!marker.canPlayerCustomise()) {
+                            return;
+                        }
+
                         setColour(minecraft, marker, dye);
                     }
                 }
@@ -161,12 +178,7 @@ public class DoomsMarkersClient {
     }
 
     private static void removeMarker(Minecraft minecraft, Marker marker) {
-        if (!marker.canPlayerRemove()) {
-            return;
-        }
-
         DoomsMarkersClient.MARKERS.remove(marker);
-        KEY_USED_THIS_HOLD = true;
 
         CompoundTag wrapper = new CompoundTag();
         wrapper.putString("uuid", marker.getUuid().toString());
@@ -177,10 +189,6 @@ public class DoomsMarkersClient {
     }
 
     private static void setIcon(Minecraft minecraft, Marker marker) {
-        if (!marker.canPlayerCustomise()) {
-            return;
-        }
-
         marker.setIconIndex(-1);
         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
         KEY_USED_THIS_HOLD = true;
@@ -200,10 +208,6 @@ public class DoomsMarkersClient {
     }
 
     private static void setColour(Minecraft minecraft, Marker marker, DyeItem dye) {
-        if (!marker.canPlayerCustomise()) {
-            return;
-        }
-
         marker.setColour(DoomsMarkers.argbIntToFloatArray(dye.getDyeColor().getTextColor()));
         KEY_USED_THIS_HOLD = true;
 

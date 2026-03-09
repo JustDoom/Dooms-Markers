@@ -50,6 +50,23 @@ public class DoomsMarkers {
         return new float[]{r / 255f, g / 255f, b / 255f, a / 255f};
     }
 
+    public static int floatArrayToArgbInt(List<Float> color) {
+        int r = (int) (color.get(0) * 255);
+        int g = (int) (color.get(1) * 255);
+        int b = (int) (color.get(2) * 255);
+        int a = (int) (color.get(3) * 255);
+
+        return (a << 24) | (r << 16) | (g << 8) | b;
+    }
+
+    public static int floatArrayToRgbInt(List<Float> color) {
+        int r = (int) (color.get(0) * 255);
+        int g = (int) (color.get(1) * 255);
+        int b = (int) (color.get(2) * 255);
+
+        return (r << 16) | (g << 8) | b;
+    }
+
     public static void sendMarkerToPlayer(ServerPlayer player, Marker marker) {
         try {
             Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);

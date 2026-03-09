@@ -37,7 +37,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             return;
         }
 
-        Marker marker = new Marker(new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, level().dimension(), true, true);
+        Marker marker = new Marker(new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, level().dimension(), true, true, 5); // TODO: Config option to change the distance. And maybe if it is enabled at all
         getMarkers().add(marker);
 
         DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);
