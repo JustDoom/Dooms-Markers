@@ -9,7 +9,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.protocol.game.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -85,9 +84,7 @@ public abstract class ServerPacketListenerMixin {
                             serverPlayer.getMarkers().remove(marker);
 
                             getPlayer().sendSystemMessage(Component.literal("You have now reached a Marker!")
-                                    .withStyle(style -> style.withColor(
-                                            TextColor.fromRgb(
-                                                    ColourUtil.floatListToRgbInt(marker.getColour())))));
+                                    .withStyle(style -> style.withColor(marker.getColourInt())));
                             break SWITCH;
                         }
                     }

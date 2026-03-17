@@ -81,6 +81,10 @@ public class Marker {
         return this.colour;
     }
 
+    public int getColourInt() {
+        return ColourUtil.floatListToRgbInt(getColour());
+    }
+
     public void setColour(List<Float> colour) {
         this.colour = new ArrayList<>(colour);
     }
