@@ -48,10 +48,6 @@ public class Marker {
         this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
-    public Marker(Vec3 position, List<Float> colour, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
-        this(position, colour, -1, itemIcon, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
-    }
-
     public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
         this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
@@ -85,12 +81,8 @@ public class Marker {
         return this.colour;
     }
 
-    public void setColour(float[] colour) {
-        List<Float> list = new ArrayList<>();
-        for (float value : colour) {
-            list.add(value);
-        }
-        this.colour = list;
+    public void setColour(List<Float> colour) {
+        this.colour = new ArrayList<>(colour);
     }
 
     public int getIconIndex() {
@@ -101,6 +93,11 @@ public class Marker {
         this.iconIndex = iconIndex;
     }
 
+    /**
+     * Handles changing the built in icon for a marker.
+     * If negative is true it will get the previous icon, otherwise the next
+     * @param negative
+     */
     public void changeIconIndex(boolean negative) {
         if (negative) {
             if (this.iconIndex-- <= -1) {

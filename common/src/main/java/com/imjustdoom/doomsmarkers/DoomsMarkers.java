@@ -17,11 +17,15 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles the shared and server only code
+ */
 public class DoomsMarkers {
     public static final String MOD_ID = "doomsmarkers";
     public static final String MOD_NAME = "Doom's Markers";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
 
+    // Packets
     public static final ResourceLocation MARKER_SYNC_PACKET = new ResourceLocation("doomsmarkers", "marker");
     public static final ResourceLocation ADD_MARKER_PACKET = new ResourceLocation("doomsmarkers", "add");
     public static final ResourceLocation CALCULATE_MAP_MARKER_PACKET = new ResourceLocation("doomsmarkers", "calculate_map");
@@ -30,8 +34,10 @@ public class DoomsMarkers {
 
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
 
+    // TODO: Config options
     public static final int MAX_MARKERS_PER_PLAYER = 50;
 
+    // Add icons to the icon list
     public static void init() {
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/block_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/diamond_marker.png"));
@@ -39,32 +45,6 @@ public class DoomsMarkers {
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/square_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/grave_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/skele_marker.png"));
-    }
-
-    public static float[] argbIntToFloatArray(int color) {
-        int a = (color >> 24) & 0xFF;
-        int r = (color >> 16) & 0xFF;
-        int g = (color >> 8) & 0xFF;
-        int b = color & 0xFF;
-
-        return new float[]{r / 255f, g / 255f, b / 255f, a / 255f};
-    }
-
-    public static int floatArrayToArgbInt(List<Float> color) {
-        int r = (int) (color.get(0) * 255);
-        int g = (int) (color.get(1) * 255);
-        int b = (int) (color.get(2) * 255);
-        int a = (int) (color.get(3) * 255);
-
-        return (a << 24) | (r << 16) | (g << 8) | b;
-    }
-
-    public static int floatArrayToRgbInt(List<Float> color) {
-        int r = (int) (color.get(0) * 255);
-        int g = (int) (color.get(1) * 255);
-        int b = (int) (color.get(2) * 255);
-
-        return (r << 16) | (g << 8) | b;
     }
 
     public static void sendMarkerToPlayer(ServerPlayer player, Marker marker) {

@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 @Mixin(Minecraft.class)
-public abstract class MinecraftClientMixin {
+public abstract class ClientMinecraftMixin {
     @Unique
     private boolean doomsMarkers$markerDownLast = false;
 
@@ -56,7 +56,7 @@ public abstract class MinecraftClientMixin {
             } else {
                 Vec3 pos = minecraft.player.position();
                 Marker marker = new Marker(new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 1);
-                DoomsMarkersClient.sendMarkerToServer(marker);
+                DoomsMarkersClient.sendEncodedMarker(minecraft, marker, DoomsMarkers.ADD_MARKER_PACKET);
             }
         }
 

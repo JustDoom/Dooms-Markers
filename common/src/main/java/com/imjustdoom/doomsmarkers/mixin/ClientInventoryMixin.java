@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Inventory.class)
-public class InventoryMixin {
+public class ClientInventoryMixin {
 
     @Inject(method = "swapPaint", at = @At(value = "HEAD"), cancellable = true)
     public void onHudScroll(double direction, CallbackInfo ci) {

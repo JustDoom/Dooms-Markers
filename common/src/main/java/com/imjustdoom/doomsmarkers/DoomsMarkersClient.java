@@ -26,24 +26,38 @@ import org.joml.Vector4d;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
+/**
+ * Handles the client side only part of the mod
+ */
 public class DoomsMarkersClient {
     public static final KeyMapping MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.use", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.doomsmarkers");
     public static final KeyMapping TOGGLE_MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.doomsmarkers");
 
+    // List of focused markers. Used by other classes/mixins to check what marker is focused. Does support multiple in
+    // focus. Maybe change it to just one
     public static final List<Marker> FOCUSED_MARKERS = new ArrayList<>();
     public static final List<Marker> MARKERS = new ArrayList<>();
 
     public static boolean KEY_USED_THIS_HOLD = false;
     public static boolean TOGGLED_MARKERS = true; // True displays them
 
+    /**
+     * Called every frame to render the UI layer of the mod.
+     * It is done through a mixin and a weird way on Forge. Probably figure out how to do it properly
+     * @param context
+     */
     public static void renderMarkers(GuiGraphics context) {
         Minecraft minecraft = Minecraft.getInstance();
+
+        // Make sure the player exists and is in a world
         if (minecraft.level == null || minecraft.player == null) {
             return;
         }
 
+        // Clear focused markers before checking for a toggle so that they won't ever be focused when toggled off
         FOCUSED_MARKERS.clear();
 
         if (!TOGGLED_MARKERS) {
@@ -59,10 +73,12 @@ public class DoomsMarkersClient {
                 .rotate(Axis.YP.rotationDegrees(camera.getYRot() + 180.0f))
                 .translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        double fov = minecraft.options.fov().get(); // * minecraft.player.getFieldOfViewModifier();
-        Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
+        // Get the projection matrix from fov without any fov modifier. Having it causes the sprinting state change look bad with marker positions
+        Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(minecraft.options.fov().get()); // * minecraft.player.getFieldOfViewModifier();
 
-        for (Marker marker : new ArrayList<>(DoomsMarkersClient.MARKERS)) {
+        Iterator<Marker> it = DoomsMarkersClient.MARKERS.iterator();
+        while (it.hasNext()) {
+            Marker marker = it.next();
             if (!marker.getDimension().equals(currentDimension)) {
                 continue;
             }
@@ -82,7 +98,8 @@ public class DoomsMarkersClient {
             String distanceText = String.format("%.0fm", distance);
 
             if (distance <= marker.getRemoveWhenNearby()) {
-                removeMarker(minecraft, marker);
+                it.remove();
+                sendRemoveMarker(minecraft, marker);
                 continue;
             }
 
@@ -111,19 +128,21 @@ public class DoomsMarkersClient {
                         }
 
                         KEY_USED_THIS_HOLD = true;
-                        removeMarker(minecraft, marker);
+
+                        it.remove();
+                        sendRemoveMarker(minecraft, marker);
                     } else if (minecraft.options.keyPickItem.consumeClick()) {
                         if (!marker.canPlayerCustomise()) {
                             return;
                         }
 
-                        setIcon(minecraft, marker);
+                        sendUpdateIcon(minecraft, marker);
                     } else if (minecraft.options.keyUse.consumeClick() && minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem() instanceof DyeItem dye) {
                         if (!marker.canPlayerCustomise()) {
                             return;
                         }
 
-                        setColour(minecraft, marker, dye);
+                        sendUpdateColour(minecraft, marker, dye);
                     }
                 }
             }
@@ -158,60 +177,53 @@ public class DoomsMarkersClient {
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
-    public static void sendMarkerToServer(Marker marker) {
-        if (Minecraft.getInstance().player == null) {
-            return;
-        }
-
-        try {
-            Tag encodedMarker = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
-
-            CompoundTag wrapper = new CompoundTag();
-            wrapper.put("data", encodedMarker);
-
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeNbt(wrapper);
-
-            Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
-        } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-        }
-    }
-
-    private static void removeMarker(Minecraft minecraft, Marker marker) {
-        DoomsMarkersClient.MARKERS.remove(marker);
-
+    /**
+     * Does not remove the marker from any lists. Just sends a packet to tell the server it should be removed
+     * @param minecraft
+     * @param marker
+     */
+    private static void sendRemoveMarker(Minecraft minecraft, Marker marker) {
         CompoundTag wrapper = new CompoundTag();
         wrapper.putString("uuid", marker.getUuid().toString());
 
-        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-        buf.writeNbt(wrapper);
-        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.DELETE_MARKER_PACKET, buf));
+        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.DELETE_MARKER_PACKET,
+                new FriendlyByteBuf(Unpooled.buffer()).writeNbt(wrapper)));
     }
 
-    private static void setIcon(Minecraft minecraft, Marker marker) {
+    /**
+     * Sends a request to attempt an update to the marker
+     * @param minecraft
+     * @param marker
+     */
+    private static void sendUpdateIcon(Minecraft minecraft, Marker marker) {
         marker.setIconIndex(-1);
         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
         KEY_USED_THIS_HOLD = true;
 
-        try {
-            Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
-
-            CompoundTag wrapper = new CompoundTag();
-            wrapper.put("data", encoded);
-
-            FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
-            buf.writeNbt(wrapper);
-            minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
-        } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-        }
+        sendEncodedMarker(minecraft, marker, DoomsMarkers.UPDATE_MARKER_PACKET);
     }
 
-    private static void setColour(Minecraft minecraft, Marker marker, DyeItem dye) {
-        marker.setColour(DoomsMarkers.argbIntToFloatArray(dye.getDyeColor().getTextColor()));
+    /**
+     * Sends an attempt to update the colour of a marker
+     * @param minecraft
+     * @param marker
+     * @param dye colour to set the marker to
+     */
+    private static void sendUpdateColour(Minecraft minecraft, Marker marker, DyeItem dye) {
+        marker.setColour(ColourUtil.argbIntToFloatList(dye.getDyeColor().getTextColor()));
         KEY_USED_THIS_HOLD = true;
 
+        sendEncodedMarker(minecraft, marker, DoomsMarkers.UPDATE_MARKER_PACKET);
+    }
+
+    /**
+     * Sends a marker object to the server with the specific packet type. Likely UPDATE or ADD marker packets
+     * @param minecraft
+     * @param marker
+     * @param packet
+     * @return
+     */
+    public static boolean sendEncodedMarker(Minecraft minecraft, Marker marker, ResourceLocation packet) {
         try {
             Tag encoded = Marker.CODEC.encodeStart(NbtOps.INSTANCE, marker).getOrThrow(false, null);
 
@@ -220,9 +232,11 @@ public class DoomsMarkersClient {
 
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeNbt(wrapper);
-            minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+            minecraft.player.connection.send(new ServerboundCustomPayloadPacket(packet, buf));
+            return true;
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            return false;
         }
     }
 }

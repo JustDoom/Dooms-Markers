@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
+import com.imjustdoom.doomsmarkers.ColourUtil;
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
 import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
@@ -24,11 +25,11 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -57,26 +58,72 @@ public abstract class ServerPacketListenerMixin {
                     getPlayer().sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
                     break;
                 }
+                Marker loaded = getMarkerFromPacket(packet);
+                if (loaded == null) {
+                    break;
+                }
+
+                loaded.setDimension(getPlayer().serverLevel().dimension());
+                serverPlayer.getMarkers().add(loaded);
+                DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
+            }
+            case "delete" -> {
                 CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    try {
-                        CompoundTag compoundTag = wrapper.getCompound("data");
-                        Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
-                        loaded.setDimension(getPlayer().serverLevel().dimension());
-                        serverPlayer.getMarkers().add(loaded);
-                        DoomsMarkers.sendMarkerToPlayer(getPlayer(), loaded);
-                    } catch (Exception e) {
-                        DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                if (wrapper == null || !wrapper.contains("uuid", Tag.TAG_STRING)) {
+                    break;
+                }
+
+                UUID uuid = UUID.fromString(wrapper.getString("uuid"));
+                for (Marker marker : serverPlayer.getMarkers()) {
+                    if (!marker.getUuid().equals(uuid)) {
+                        continue;
                     }
+
+                    if (marker.getRemoveWhenNearby() != -1) {
+                        double distance = Math.sqrt(getPlayer().distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
+                        if (distance <= marker.getRemoveWhenNearby()) {
+                            serverPlayer.getMarkers().remove(marker);
+
+                            getPlayer().sendSystemMessage(Component.literal("You have now reached a Marker!")
+                                    .withStyle(style -> style.withColor(
+                                            TextColor.fromRgb(
+                                                    ColourUtil.floatListToRgbInt(marker.getColour())))));
+                            break SWITCH;
+                        }
+                    }
+
+                    if (!marker.canPlayerRemove()) {
+                        continue;
+                    }
+
+                    serverPlayer.getMarkers().remove(marker);
+                    break SWITCH;
+                }
+            }
+            case "update" -> {
+                Marker loaded = getMarkerFromPacket(packet);
+                if (loaded == null) {
+                    break;
+                }
+
+                for (Marker marker : serverPlayer.getMarkers()) {
+                    if (!marker.getUuid().equals(loaded.getUuid()) || !marker.canPlayerCustomise()) {
+                        break;
+                    }
+
+                    serverPlayer.getMarkers().remove(marker);
+                    serverPlayer.getMarkers().add(loaded);
                 }
             }
             case "calculate_map" -> {
+                // Get item in hand and make sure it is a valid item
                 ItemStack itemStack = getPlayer().getItemInHand(getPlayer().getUsedItemHand());
                 if (itemStack.getItem() != Items.FILLED_MAP) {
                     getPlayer().sendSystemMessage(Component.literal("Unable to detect map item").withStyle(ChatFormatting.RED));
                     break;
                 }
 
+                // Make sure the map has data to be read
                 MapItemSavedData data = MapItem.getSavedData(itemStack, getPlayer().level());
                 if (data == null) {
                     DoomsMarkers.LOG.info("No data to fetch");
@@ -89,11 +136,7 @@ public abstract class ServerPacketListenerMixin {
                         break SWITCH;
                     }
 
-                    List<Float> colour = new ArrayList<>();
-                    for (float value : DoomsMarkers.argbIntToFloatArray(banner.getColor().getTextColor())) {
-                        colour.add(value);
-                    }
-
+                    List<Float> colour = ColourUtil.argbIntToFloatList(banner.getColor().getTextColor());
                     Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, getPlayer().serverLevel().dimension(), true, true, -1);
                     serverPlayer.getMarkers().add(marker);
 
@@ -119,10 +162,7 @@ public abstract class ServerPacketListenerMixin {
 
                     List<Float> colour;
                     if (decoration.getType().hasMapColor()) {
-                        colour = new ArrayList<>();
-                        for (float value : DoomsMarkers.argbIntToFloatArray(decoration.getType().getMapColor())) {
-                            colour.add(value);
-                        }
+                        colour = ColourUtil.argbIntToFloatList(decoration.getType().getMapColor());
                     } else {
                         colour = List.of(1f, 1f, 1f, 1f);
                     }
@@ -132,62 +172,23 @@ public abstract class ServerPacketListenerMixin {
                     DoomsMarkers.sendMarkerToPlayer(getPlayer(), marker);
                 }
             }
-            case "delete" -> {
-                CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper == null || !wrapper.contains("uuid", Tag.TAG_STRING)) {
-                    break;
-                }
-
-                UUID uuid = UUID.fromString(wrapper.getString("uuid"));
-                for (Marker marker : serverPlayer.getMarkers()) {
-                    if (!marker.getUuid().equals(uuid)) {
-                        continue;
-                    }
-
-                    if (marker.getRemoveWhenNearby() != -1) {
-                        double distance = Math.sqrt(getPlayer().distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
-                        if (distance <= marker.getRemoveWhenNearby()) {
-                            serverPlayer.getMarkers().remove(marker);
-
-                            getPlayer().sendSystemMessage(Component.literal("You have now reached a Marker!")
-                                    .withStyle(style -> style.withColor(
-                                            TextColor.fromRgb(
-                                                    DoomsMarkers.floatArrayToRgbInt(marker.getColour())))));
-                            break SWITCH;
-                        }
-                    }
-
-                    if (!marker.canPlayerRemove()) {
-                        continue;
-                    }
-
-                    serverPlayer.getMarkers().remove(marker);
-                    break SWITCH;
-                }
-            }
-            case "update" -> {
-                CompoundTag wrapper = packet.getData().readNbt();
-                if (wrapper == null || !wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                    break;
-                }
-
-                try {
-                    CompoundTag compoundTag = wrapper.getCompound("data");
-                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
-                    for (Marker marker : serverPlayer.getMarkers()) {
-                        if (!marker.getUuid().equals(loaded.getUuid()) || !marker.canPlayerCustomise()) {
-                            break;
-                        }
-
-                        serverPlayer.getMarkers().remove(marker);
-                        serverPlayer.getMarkers().add(loaded);
-                    }
-                } catch (Exception e) {
-                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-                }
-            }
         }
 
         ci.cancel();
+    }
+
+    @Unique
+    private Marker getMarkerFromPacket(ServerboundCustomPayloadPacket packet) {
+        CompoundTag wrapper = packet.getData().readNbt();
+        if (wrapper == null || !wrapper.contains("data", Tag.TAG_COMPOUND)) {
+            return null;
+        }
+
+        try {
+            return Marker.CODEC.parse(NbtOps.INSTANCE, wrapper.getCompound("data")).getOrThrow(false, null);
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            return null;
+        }
     }
 }

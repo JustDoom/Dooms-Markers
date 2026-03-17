@@ -10,8 +10,8 @@
   ],
   "client": [
     "ClientPacketListenerMixin",
-    "InventoryMixin",
-    "MinecraftClientMixin"
+    "ClientInventoryMixin",
+    "ClientMinecraftMixin"
   ],
   "server": [
   ],
