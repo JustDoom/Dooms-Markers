@@ -20,6 +20,7 @@ import java.util.UUID;
 public class Marker {
     public static Codec<Marker> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.fieldOf("uuid").forGetter(Marker::getUuid),
+            Codec.STRING.fieldOf("type").forGetter(Marker::getType),
             Vec3.CODEC.fieldOf("position").forGetter(Marker::getPosition),
             Codec.FLOAT.listOf().fieldOf("colour").forGetter(Marker::getColour),
             Codec.INT.fieldOf("iconIndex").forGetter(Marker::getIconIndex),
@@ -31,6 +32,8 @@ public class Marker {
     ).apply(instance, Marker::new));
 
     private UUID uuid;
+    private String type; // This is a manual id/type used mainly for modpack devs. It can specify the type of marker. Does not need to be unique
+    private String title; // TODO: A title that shows up when hovered. Use a nametag to rename
     private Vec3 position;
     private List<Float> colour;
     private int iconIndex;
@@ -45,18 +48,18 @@ public class Marker {
     }
 
     public Marker(Vec3 position, List<Float> colour, int iconIndex) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true, true, -1);
+        this(UUID.randomUUID(), null, position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true, true, -1);
     }
 
     public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
-        this(UUID.randomUUID(), position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+        this(UUID.randomUUID(), null, position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
-        this(UUID.randomUUID(), position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+    public Marker(String type, Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
+        this(UUID.randomUUID(), type, position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
-    public Marker(UUID uuid, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon,
+    public Marker(UUID uuid, String type, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon,
                   ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
         this.uuid = uuid;
         this.position = position;
@@ -71,6 +74,14 @@ public class Marker {
 
     public UUID getUuid() {
         return this.uuid;
+    }
+
+    public String getType() {
+        return this.type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 
     public Vec3 getPosition() {

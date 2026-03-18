@@ -36,6 +36,7 @@ public class MarkerParser {
     private final StringReader reader;
     private final CommandBuildContext commandBuildContext;
 
+    private String type;
     private Vec3 position;
     private List<Float> colour = List.of(1.0f, 1.0f, 1.0f);
     private int iconIndex = 0;
@@ -63,7 +64,7 @@ public class MarkerParser {
             }
         }
 
-        return new Marker(this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise, this.removeWhenNearby);
+        return new Marker(this.type, this.position, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise, this.removeWhenNearby);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -106,6 +107,7 @@ public class MarkerParser {
 
     private void parseValue(String key) throws CommandSyntaxException {
         switch (key.toLowerCase()) {
+            case "type" -> this.type = parseString();
             case "pos", "position" -> this.position = parseVec3();
             case "color", "colour" -> this.colour = parseColorList();
             case "icon", "iconindex" -> this.iconIndex = parseInt();
@@ -184,6 +186,15 @@ public class MarkerParser {
         }
 
         return Boolean.parseBoolean(this.reader.getString().substring(start, this.reader.getCursor()));
+    }
+
+    private String parseString() throws CommandSyntaxException {
+        int start = this.reader.getCursor();
+        while (this.reader.canRead() && isItemChar(this.reader.peek())) {
+            this.reader.skip();
+        }
+
+        return this.reader.getString().substring(start, this.reader.getCursor());
     }
 
     private Item parseItem() throws CommandSyntaxException {
