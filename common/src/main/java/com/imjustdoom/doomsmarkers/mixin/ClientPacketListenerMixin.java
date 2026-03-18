@@ -1,13 +1,8 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
-import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
-import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.network.PacketHandler;
+import com.imjustdoom.doomsmarkers.network.PacketRegistry;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
@@ -17,8 +12,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.List;
-
 @Mixin(value = ClientPacketListener.class)
 public abstract class ClientPacketListenerMixin {
     @Inject(method = "handleCustomPayload", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/protocol/game/ClientboundCustomPayloadPacket;getData()Lnet/minecraft/network/FriendlyByteBuf;", shift = At.Shift.AFTER), locals = LocalCapture.CAPTURE_FAILHARD, cancellable = true)
@@ -27,31 +20,10 @@ public abstract class ClientPacketListenerMixin {
             return;
         }
 
-        if (location.getPath().equals("marker")) {
-            CompoundTag wrapper = packet.getData().readNbt();
-            if (wrapper != null && wrapper.contains("data", Tag.TAG_LIST)) {
-                try {
-                    ListTag dataList = wrapper.getList("data", Tag.TAG_COMPOUND);
-                    List<Marker> loaded = Marker.CODEC.listOf().parse(NbtOps.INSTANCE, dataList).getOrThrow(false, null);
-                    DoomsMarkersClient.MARKERS.clear();
-                    DoomsMarkersClient.MARKERS.addAll(loaded);
-                } catch (Exception e) {
-                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-                }
-            }
-        } else if (location.getPath().equals("add")) {
-            CompoundTag wrapper = packet.getData().readNbt();
-            if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {
-                try {
-                    CompoundTag compoundTag = wrapper.getCompound("data");
-                    Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
-                    DoomsMarkersClient.MARKERS.add(loaded);
-                } catch (Exception e) {
-                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
-                }
-            }
+        PacketHandler handler = PacketRegistry.get(location);
+        if (handler != null) {
+            handler.handle(null, packet.getData());
+            ci.cancel();
         }
-
-        ci.cancel();
     }
 }

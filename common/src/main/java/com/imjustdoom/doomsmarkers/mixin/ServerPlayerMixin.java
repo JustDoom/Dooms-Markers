@@ -22,6 +22,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Handles writing and reading the markers to the player. As well as adding a marker when a player dies
+ */
 @Mixin(ServerPlayer.class)
 public abstract class ServerPlayerMixin extends LivingEntity implements ServerPlayerInterface {
     @Unique

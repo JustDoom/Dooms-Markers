@@ -3,6 +3,10 @@ package com.imjustdoom.doomsmarkers;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -169,5 +173,19 @@ public class Marker {
                 ", canPlayerCustomise=" + this.canPlayerCustomise +
                 ", removeWhenNearby=" + this.removeWhenNearby +
                 '}';
+    }
+
+    public static Marker getMarkerFromBuffer(FriendlyByteBuf data) {
+        CompoundTag wrapper = data.readNbt();
+        if (wrapper == null || !wrapper.contains("data", Tag.TAG_COMPOUND)) {
+            return null;
+        }
+
+        try {
+            return Marker.CODEC.parse(NbtOps.INSTANCE, wrapper.getCompound("data")).getOrThrow(false, null);
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            return null;
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.imjustdoom.doomsmarkers.network.packet.SyncMarkerPacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -23,7 +24,7 @@ public class ServerListener {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeNbt(wrapper);
 
-            player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
+            player.connection.send(new ClientboundCustomPayloadPacket(SyncMarkerPacket.SYNC_MARKER_PACKET, buf));
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
         }

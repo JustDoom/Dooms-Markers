@@ -1,5 +1,7 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.imjustdoom.doomsmarkers.network.packet.DeleteMarkerPacket;
+import com.imjustdoom.doomsmarkers.network.packet.UpdateMarkerPacket;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -186,7 +188,7 @@ public class DoomsMarkersClient {
         CompoundTag wrapper = new CompoundTag();
         wrapper.putString("uuid", marker.getUuid().toString());
 
-        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.DELETE_MARKER_PACKET,
+        minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DeleteMarkerPacket.DELETE_MARKER_PACKET,
                 new FriendlyByteBuf(Unpooled.buffer()).writeNbt(wrapper)));
     }
 
@@ -200,7 +202,7 @@ public class DoomsMarkersClient {
         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
         KEY_USED_THIS_HOLD = true;
 
-        sendEncodedMarker(minecraft, marker, DoomsMarkers.UPDATE_MARKER_PACKET);
+        sendEncodedMarker(minecraft, marker, UpdateMarkerPacket.UPDATE_MARKER_PACKET);
     }
 
     /**
@@ -213,7 +215,7 @@ public class DoomsMarkersClient {
         marker.setColour(ColourUtil.argbIntToFloatList(dye.getDyeColor().getTextColor()));
         KEY_USED_THIS_HOLD = true;
 
-        sendEncodedMarker(minecraft, marker, DoomsMarkers.UPDATE_MARKER_PACKET);
+        sendEncodedMarker(minecraft, marker, UpdateMarkerPacket.UPDATE_MARKER_PACKET);
     }
 
     /**

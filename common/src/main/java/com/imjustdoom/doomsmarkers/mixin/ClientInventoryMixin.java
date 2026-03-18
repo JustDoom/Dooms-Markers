@@ -3,6 +3,7 @@ package com.imjustdoom.doomsmarkers.mixin;
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.network.packet.UpdateMarkerPacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
@@ -47,7 +48,7 @@ public class ClientInventoryMixin {
 
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeNbt(wrapper);
-            Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.UPDATE_MARKER_PACKET, buf));
+            Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(UpdateMarkerPacket.UPDATE_MARKER_PACKET, buf));
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
         }

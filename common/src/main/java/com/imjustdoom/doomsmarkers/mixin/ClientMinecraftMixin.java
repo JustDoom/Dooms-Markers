@@ -1,8 +1,9 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.network.packet.AddMarkerPacket;
+import com.imjustdoom.doomsmarkers.network.packet.CalculateMapMarkerPacket;
 import io.netty.buffer.Unpooled;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -52,11 +53,11 @@ public abstract class ClientMinecraftMixin {
         if (this.doomsMarkers$markerDownLast && !currentDown && !DoomsMarkersClient.KEY_USED_THIS_HOLD && DoomsMarkersClient.TOGGLED_MARKERS) {
             ItemStack itemStack = minecraft.player.getItemInHand(minecraft.player.getUsedItemHand());
             if (itemStack.getItem() == Items.FILLED_MAP) {
-                minecraft.player.connection.send(new ServerboundCustomPayloadPacket(DoomsMarkers.CALCULATE_MAP_MARKER_PACKET, new FriendlyByteBuf(Unpooled.buffer())));
+                minecraft.player.connection.send(new ServerboundCustomPayloadPacket(CalculateMapMarkerPacket.CALCULATE_MAP_MARKER_PACKET, new FriendlyByteBuf(Unpooled.buffer())));
             } else {
                 Vec3 pos = minecraft.player.position();
                 Marker marker = new Marker(new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 1);
-                DoomsMarkersClient.sendEncodedMarker(minecraft, marker, DoomsMarkers.ADD_MARKER_PACKET);
+                DoomsMarkersClient.sendEncodedMarker(minecraft, marker, AddMarkerPacket.ADD_MARKER_PACKET);
             }
         }
 

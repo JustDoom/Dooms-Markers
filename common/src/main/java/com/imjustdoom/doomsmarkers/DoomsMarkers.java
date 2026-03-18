@@ -1,5 +1,7 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.imjustdoom.doomsmarkers.network.PacketRegistry;
+import com.imjustdoom.doomsmarkers.network.packet.*;
 import io.netty.buffer.Unpooled;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -25,13 +27,6 @@ public class DoomsMarkers {
     public static final String MOD_NAME = "Doom's Markers";
     public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
 
-    // Packets
-    public static final ResourceLocation MARKER_SYNC_PACKET = new ResourceLocation("doomsmarkers", "marker");
-    public static final ResourceLocation ADD_MARKER_PACKET = new ResourceLocation("doomsmarkers", "add");
-    public static final ResourceLocation CALCULATE_MAP_MARKER_PACKET = new ResourceLocation("doomsmarkers", "calculate_map");
-    public static final ResourceLocation DELETE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "delete");
-    public static final ResourceLocation UPDATE_MARKER_PACKET = new ResourceLocation("doomsmarkers", "update");
-
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
 
     // TODO: Config options
@@ -39,6 +34,12 @@ public class DoomsMarkers {
 
     // Add icons to the icon list
     public static void init() {
+        PacketRegistry.register(new AddMarkerPacket());
+        PacketRegistry.register(new CalculateMapMarkerPacket());
+        PacketRegistry.register(new DeleteMarkerPacket());
+        PacketRegistry.register(new SyncMarkerPacket());
+        PacketRegistry.register(new UpdateMarkerPacket());
+
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/block_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/diamond_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/monster_marker.png"));
@@ -57,7 +58,7 @@ public class DoomsMarkers {
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeNbt(wrapper);
 
-            player.connection.send(new ClientboundCustomPayloadPacket(DoomsMarkers.ADD_MARKER_PACKET, buf));
+            player.connection.send(new ClientboundCustomPayloadPacket(AddMarkerPacket.ADD_MARKER_PACKET, buf));
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
         }

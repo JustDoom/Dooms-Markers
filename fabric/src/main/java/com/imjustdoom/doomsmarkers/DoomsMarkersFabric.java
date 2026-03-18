@@ -3,6 +3,7 @@ package com.imjustdoom.doomsmarkers;
 import com.imjustdoom.doomsmarkers.command.Commands;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgument;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgumentInfo;
+import com.imjustdoom.doomsmarkers.network.packet.SyncMarkerPacket;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.ModInitializer;
@@ -26,6 +27,7 @@ public class DoomsMarkersFabric implements ModInitializer {
             KeyBindingHelper.registerKeyBinding(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
         }
 
+        // Handle player joining and sending the markers to the client
         ServerPlayConnectionEvents.INIT.register((listener, server) -> {
             try {
                 Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, ((ServerPlayerInterface) listener.getPlayer()).getMarkers()).getOrThrow(false, null);
@@ -36,7 +38,7 @@ public class DoomsMarkersFabric implements ModInitializer {
                 FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
                 buf.writeNbt(wrapper);
 
-                listener.send(new ClientboundCustomPayloadPacket(DoomsMarkers.MARKER_SYNC_PACKET, buf));
+                listener.send(new ClientboundCustomPayloadPacket(SyncMarkerPacket.SYNC_MARKER_PACKET, buf));
             } catch (Exception e) {
                 DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
             }
