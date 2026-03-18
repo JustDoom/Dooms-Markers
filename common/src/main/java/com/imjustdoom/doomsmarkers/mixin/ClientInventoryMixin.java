@@ -22,7 +22,7 @@ public class ClientInventoryMixin {
 
     @Inject(method = "swapPaint", at = @At(value = "HEAD"), cancellable = true)
     public void onHudScroll(double direction, CallbackInfo ci) {
-        if (!DoomsMarkersClient.MARKER_KEY_MAPPING.isDown() || Minecraft.getInstance().player == null || DoomsMarkersClient.FOCUSED_MARKERS.isEmpty()) {
+        if (!DoomsMarkersClient.MARKER_KEY_MAPPING.isDown() || Minecraft.getInstance().player == null || DoomsMarkersClient.FOCUSED_MARKER == null) {
             return;
         }
 
@@ -31,7 +31,7 @@ public class ClientInventoryMixin {
             return;
         }
 
-        Marker marker = DoomsMarkersClient.FOCUSED_MARKERS.get(0);
+        Marker marker = DoomsMarkersClient.FOCUSED_MARKER;
 
         if (!marker.canPlayerCustomise()) {
             return;

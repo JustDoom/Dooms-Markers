@@ -40,7 +40,7 @@ public class DoomsMarkersClient {
 
     // List of focused markers. Used by other classes/mixins to check what marker is focused. Does support multiple in
     // focus. Maybe change it to just one
-    public static final List<Marker> FOCUSED_MARKERS = new ArrayList<>();
+    public static Marker FOCUSED_MARKER;
     public static final List<Marker> MARKERS = new ArrayList<>();
 
     public static boolean KEY_USED_THIS_HOLD = false;
@@ -60,7 +60,7 @@ public class DoomsMarkersClient {
         }
 
         // Clear focused markers before checking for a toggle so that they won't ever be focused when toggled off
-        FOCUSED_MARKERS.clear();
+        FOCUSED_MARKER = null;
 
         if (!TOGGLED_MARKERS) {
             return;
@@ -122,7 +122,7 @@ public class DoomsMarkersClient {
                     && screenY > context.guiHeight() / 2f - focusArea && screenY < context.guiHeight() / 2f + focusArea;
 
             if (focused) {
-                FOCUSED_MARKERS.add(marker);
+                FOCUSED_MARKER = marker;
                 if (MARKER_KEY_MAPPING.isDown()) {
                     if (minecraft.options.keyAttack.consumeClick()) {
                         if (!marker.canPlayerRemove()) {
