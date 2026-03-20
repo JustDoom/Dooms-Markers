@@ -237,7 +237,7 @@ public class DoomsMarkersClient {
             minecraft.player.connection.send(new ServerboundCustomPayloadPacket(packet, buf));
             return true;
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to encode the Markers here: ", e);
             return false;
         }
     }

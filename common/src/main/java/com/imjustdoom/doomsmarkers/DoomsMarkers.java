@@ -46,6 +46,8 @@ public class DoomsMarkers {
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/square_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/grave_marker.png"));
         MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/skele_marker.png"));
+        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/nether_portal_marker.png"));
+        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/end_portal_marker.png"));
     }
 
     public static void sendMarkerToPlayer(ServerPlayer player, Marker marker) {
@@ -60,7 +62,7 @@ public class DoomsMarkers {
 
             player.connection.send(new ClientboundCustomPayloadPacket(AddMarkerPacket.ADD_MARKER_PACKET, buf));
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
         }
     }
 

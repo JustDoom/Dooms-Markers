@@ -50,7 +50,7 @@ public class ClientInventoryMixin {
             buf.writeNbt(wrapper);
             Minecraft.getInstance().player.connection.send(new ServerboundCustomPayloadPacket(UpdateMarkerPacket.UPDATE_MARKER_PACKET, buf));
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
         }
 
         ci.cancel();

@@ -11,6 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -40,7 +41,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             return;
         }
 
-        Marker marker = new Marker(new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, level().dimension(), true, true, 5); // TODO: Config option to change the distance. And maybe if it is enabled at all
+        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, ItemStack.EMPTY.getItem(), level().dimension(), true, true, 5); // TODO: Config option to change the distance. And maybe if it is enabled at all
         getMarkers().add(marker);
 
         DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);
@@ -59,7 +60,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             compoundTag.put("Markers", encodedList);
             DoomsMarkers.LOG.info("Saved {} markers for {}", getMarkers().size(), player.getName().getString());
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
         }
     }
 
@@ -76,7 +77,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             getMarkers().addAll(Marker.CODEC.listOf().parse(NbtOps.INSTANCE, markersList).getOrThrow(false, null));
             DoomsMarkers.LOG.info("Loaded {} markers for {}", getMarkers().size(), player.getName().getString());
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
         }
     }
 

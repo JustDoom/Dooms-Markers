@@ -74,7 +74,7 @@ public class Commands {
         try {
             marker = MarkerArgument.getMarker(context, "marker");
         } catch (IllegalArgumentException exception) {
-            marker = new Marker();
+            marker = new Marker("custom");
         }
 
         // Handle location

@@ -40,7 +40,7 @@ public class DoomsMarkersFabric implements ModInitializer {
 
                 listener.send(new ClientboundCustomPayloadPacket(SyncMarkerPacket.SYNC_MARKER_PACKET, buf));
             } catch (Exception e) {
-                DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
             }
         });
 

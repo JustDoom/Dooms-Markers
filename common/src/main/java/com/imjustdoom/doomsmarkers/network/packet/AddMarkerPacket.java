@@ -47,7 +47,7 @@ public class AddMarkerPacket implements PacketHandler {
                     Marker loaded = Marker.CODEC.parse(NbtOps.INSTANCE, compoundTag).getOrThrow(false, null);
                     DoomsMarkersClient.MARKERS.add(loaded);
                 } catch (Exception e) {
-                    DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                    DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
                 }
             }
         }

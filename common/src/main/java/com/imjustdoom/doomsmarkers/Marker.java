@@ -20,7 +20,7 @@ import java.util.UUID;
 public class Marker {
     public static Codec<Marker> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             UUIDUtil.CODEC.fieldOf("uuid").forGetter(Marker::getUuid),
-            Codec.STRING.fieldOf("type").forGetter(Marker::getType),
+            Codec.STRING.optionalFieldOf("type", "player_made").forGetter(Marker::getType),
             Vec3.CODEC.fieldOf("position").forGetter(Marker::getPosition),
             Codec.FLOAT.listOf().fieldOf("colour").forGetter(Marker::getColour),
             Codec.INT.fieldOf("iconIndex").forGetter(Marker::getIconIndex),
@@ -33,7 +33,7 @@ public class Marker {
 
     private UUID uuid;
     private String type; // This is a manual id/type used mainly for modpack devs. It can specify the type of marker. Does not need to be unique
-    private String title; // TODO: A title that shows up when hovered. Use a nametag to rename
+//    private String title; // TODO: A title that shows up when hovered. Use a nametag to rename
     private Vec3 position;
     private List<Float> colour;
     private int iconIndex;
@@ -43,25 +43,19 @@ public class Marker {
     private boolean canPlayerCustomise;
     private int removeWhenNearby;
 
-    public Marker()  {
-        this(null, List.of(1f, 1f, 1f, 1f), 0);
-    }
-
-    public Marker(Vec3 position, List<Float> colour, int iconIndex) {
-        this(UUID.randomUUID(), null, position, colour, iconIndex, ItemStack.EMPTY, Level.OVERWORLD, true, true, -1);
-    }
-
-    public Marker(Vec3 position, List<Float> colour, int iconIndex, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
-        this(UUID.randomUUID(), null, position, colour, iconIndex, ItemStack.EMPTY, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+    public Marker(String type)  {
+        this(type, null, List.of(1f, 1f, 1f, 1f), 0, ItemStack.EMPTY.getItem(), Level.OVERWORLD, true, true, -1);
     }
 
     public Marker(String type, Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
         this(UUID.randomUUID(), type, position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
+    // TODO: Maybe make a builder for this since this is getting a bit much
     public Marker(UUID uuid, String type, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon,
                   ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
         this.uuid = uuid;
+        this.type = type;
         this.position = position;
         this.colour = colour;
         this.iconIndex = iconIndex;
@@ -175,6 +169,7 @@ public class Marker {
     public String toString() {
         return "Marker{" +
                 "uuid=" + this.uuid +
+                ", type=" + this.type +
                 ", position=" + this.position +
                 ", colour=" + this.colour +
                 ", iconIndex=" + this.iconIndex +
@@ -195,7 +190,7 @@ public class Marker {
         try {
             return Marker.CODEC.parse(NbtOps.INSTANCE, wrapper.getCompound("data")).getOrThrow(false, null);
         } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
             return null;
         }
     }

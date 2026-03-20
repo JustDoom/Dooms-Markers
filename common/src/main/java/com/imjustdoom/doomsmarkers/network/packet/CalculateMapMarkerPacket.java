@@ -55,7 +55,7 @@ public class CalculateMapMarkerPacket implements PacketHandler {
                 }
 
                 List<Float> colour = ColourUtil.argbIntToFloatList(banner.getColor().getTextColor());
-                Marker marker = new Marker(new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, serverPlayer.serverLevel().dimension(), true, true, -1);
+                Marker marker = new Marker("map", new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, 2, ItemStack.EMPTY.getItem(), serverPlayer.serverLevel().dimension(), true, true, -1);
                 markerPlayer.getMarkers().add(marker);
 
                 DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);
@@ -84,7 +84,7 @@ public class CalculateMapMarkerPacket implements PacketHandler {
                 } else {
                     colour = List.of(1f, 1f, 1f, 1f);
                 }
-                Marker marker = new Marker(DoomsMarkers.getWorldPosFromDecoration(mapData, decoration), colour, 2, serverPlayer.serverLevel().dimension(), true, true, -1);
+                Marker marker = new Marker("map", DoomsMarkers.getWorldPosFromDecoration(mapData, decoration), colour, 2, ItemStack.EMPTY.getItem(), serverPlayer.serverLevel().dimension(), true, true, -1);
                 markerPlayer.getMarkers().add(marker);
 
                 DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);

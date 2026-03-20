@@ -32,7 +32,7 @@ public class SyncMarkerPacket implements PacketHandler {
                 DoomsMarkersClient.MARKERS.clear();
                 DoomsMarkersClient.MARKERS.addAll(loaded);
             } catch (Exception e) {
-                DoomsMarkers.LOG.error("Unable to encode the Markers: {}", e.getMessage());
+                DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
             }
         }
     }
