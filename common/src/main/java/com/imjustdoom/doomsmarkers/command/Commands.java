@@ -3,8 +3,10 @@ package com.imjustdoom.doomsmarkers.command;
 import com.google.common.base.Stopwatch;
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.MarkerLite;
 import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgument;
+import com.imjustdoom.doomsmarkers.command.argument.MarkerLiteArgument;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -42,8 +44,6 @@ public class Commands {
                 literal("marker")
                         .requires(source -> source.hasPermission(2))
                         .then(argument("player", EntityArgument.player())
-//                                .then(literal("teleport")
-//                                )
                                 .then(literal("add")
                                         .then(argument("marker", MarkerArgument.marker(context))
                                                 .then(argument("structure", ResourceOrTagKeyArgument.resourceOrTagKey(Registries.STRUCTURE))
@@ -52,6 +52,12 @@ public class Commands {
                                                 .executes(Commands::markersItem) // Specific marker but no structure
                                         )
                                         .executes(Commands::markersItem) // When no marker info is specified. Just use default one
+                                )
+                                .then(literal("teleport")
+                                        .then(argument("marker_lite", MarkerLiteArgument.marker(context))
+                                                .executes(Commands::markersTeleport)
+                                        )
+                                        .executes(Commands::markersMissingExistingMarker) // When any marker targets are missing
                                 )
                                 .executes(Commands::markersMissingAction) // When an action is not specified
                         )
@@ -96,8 +102,7 @@ public class Commands {
 
         String message = String.format("Successfully created the marker \"%s\" for player %s", marker, serverPlayer.getName().getString());
         DoomsMarkers.LOG.info(message);
-        context.getSource().sendSuccess(() ->
-                Component.literal(message), false);
+        context.getSource().sendSuccess(() -> Component.literal(message), false);
 
         return 1;
     }
@@ -124,6 +129,60 @@ public class Commands {
         }
     }
 
+    private static int markersTeleport(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer serverPlayer = EntityArgument.getPlayer(context, "player");
+        ServerPlayerInterface serverPlayerLayer = (ServerPlayerInterface) serverPlayer;
+
+        if (!context.getSource().isPlayer()) {
+            context.getSource().sendFailure(Component.literal("Must be player to use this command"));
+            return 1;
+        }
+
+        // Get the first matching marker
+        MarkerLite markerLite;
+        try {
+            markerLite = MarkerLiteArgument.getMarker(context, "marker_lite");
+        } catch (IllegalArgumentException exception) {
+            context.getSource().sendFailure(Component.literal("Unable to validate marker specifications"));
+            return 1;
+        }
+
+        Marker foundMaker = null;
+        for (Marker marker : serverPlayerLayer.getMarkers()) {
+            if ((markerLite.getUuid() == null || markerLite.getUuid().equals(marker.getUuid()))
+                && (markerLite.getType() == null || markerLite.getType().equals(marker.getType()))
+                && (markerLite.getPosition() == null || markerLite.getPosition().equals(marker.getPosition()))
+                && (markerLite.getDimension() == null || markerLite.getDimension().equals(marker.getDimension()))) {
+                foundMaker = marker;
+                break;
+            }
+        }
+
+        if (foundMaker == null) {
+            context.getSource().sendFailure(Component.literal("Unable to find a matching marker :("));
+            return 1;
+        }
+
+        ServerLevel level = context.getSource().getServer().getLevel(foundMaker.getDimension());
+        if (level == null) {
+            context.getSource().sendFailure(Component.literal("Unable to find a matching dimension"));
+            return 1;
+        }
+
+        context.getSource().getPlayer().teleportTo(level,
+                foundMaker.getPosition().x(),
+                foundMaker.getPosition().y(),
+                foundMaker.getPosition().z(),
+                context.getSource().getPlayer().getYRot(),
+                context.getSource().getPlayer().getXRot());
+
+        String message = String.format("Successfully teleported to the marker \"%s\" for player %s", markerLite, serverPlayer.getName().getString());
+        DoomsMarkers.LOG.info(message);
+        context.getSource().sendSuccess(() -> Component.literal(message), false);
+
+        return 1;
+    }
+
     private static int markersMissingPlayer(CommandContext<CommandSourceStack> context) {
         context.getSource().sendFailure(Component.literal("Please specify a player to apply the marks to"));
         return 1;
@@ -131,6 +190,11 @@ public class Commands {
 
     private static int markersMissingAction(CommandContext<CommandSourceStack> context) {
         context.getSource().sendFailure(Component.literal("Please specify an action to take"));
+        return 1;
+    }
+
+    private static int markersMissingExistingMarker(CommandContext<CommandSourceStack> context) {
+        context.getSource().sendFailure(Component.literal("Please specify a marker to affect"));
         return 1;
     }
 

@@ -3,6 +3,8 @@ package com.imjustdoom.doomsmarkers;
 import com.imjustdoom.doomsmarkers.command.Commands;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgument;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgumentInfo;
+import com.imjustdoom.doomsmarkers.command.argument.MarkerLiteArgument;
+import com.imjustdoom.doomsmarkers.command.argument.MarkerLiteArgumentInfo;
 import com.imjustdoom.doomsmarkers.network.packet.SyncMarkerPacket;
 import io.netty.buffer.Unpooled;
 import net.fabricmc.api.EnvType;
@@ -45,6 +47,7 @@ public class DoomsMarkersFabric implements ModInitializer {
         });
 
         ArgumentTypeRegistry.registerArgumentType(new ResourceLocation(DoomsMarkers.MOD_ID, "marker"), MarkerArgument.class, new MarkerArgumentInfo());
+        ArgumentTypeRegistry.registerArgumentType(new ResourceLocation(DoomsMarkers.MOD_ID, "marker_lite"), MarkerLiteArgument.class, new MarkerLiteArgumentInfo());
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> Commands.register(dispatcher, registryAccess));
 
