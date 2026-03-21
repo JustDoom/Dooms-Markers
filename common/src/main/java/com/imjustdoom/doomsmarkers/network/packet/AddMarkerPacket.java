@@ -1,9 +1,6 @@
 package com.imjustdoom.doomsmarkers.network.packet;
 
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
-import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
-import com.imjustdoom.doomsmarkers.Marker;
-import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
+import com.imjustdoom.doomsmarkers.*;
 import com.imjustdoom.doomsmarkers.network.PacketHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
@@ -27,10 +24,11 @@ public class AddMarkerPacket implements PacketHandler {
     public void handle(Player player, FriendlyByteBuf data) {
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayerInterface markerPlayer = (ServerPlayerInterface) serverPlayer;
-            if (markerPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
-                serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
+            if (markerPlayer.getMarkers().size() >= Config.get().maxMarkers) {
+                serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + Config.get().maxMarkers + " markers :(").withStyle(ChatFormatting.RED));
                 return;
             }
+
             Marker loaded = Marker.getMarkerFromBuffer(data);
             if (loaded == null) {
                 return;

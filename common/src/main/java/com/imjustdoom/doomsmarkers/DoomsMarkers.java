@@ -29,11 +29,10 @@ public class DoomsMarkers {
 
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
 
-    // TODO: Config options
-    public static final int MAX_MARKERS_PER_PLAYER = 50;
-
     // Add icons to the icon list
     public static void init() {
+        Config.get();
+
         PacketRegistry.register(new AddMarkerPacket());
         PacketRegistry.register(new CalculateMapMarkerPacket());
         PacketRegistry.register(new DeleteMarkerPacket());

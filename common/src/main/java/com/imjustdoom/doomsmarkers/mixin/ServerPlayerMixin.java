@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
+import com.imjustdoom.doomsmarkers.Config;
 import com.imjustdoom.doomsmarkers.DoomsMarkers;
 import com.imjustdoom.doomsmarkers.Marker;
 import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
@@ -37,11 +38,11 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
 
     @Inject(method = "die", at = @At(value = "TAIL"))
     public void onDeath(DamageSource damageSource, CallbackInfo ci) {
-        if (level().isClientSide()) {
+        if (level().isClientSide() || !Config.get().deathMarkers.enabled) {
             return;
         }
 
-        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, ItemStack.EMPTY.getItem(), level().dimension(), true, true, 5); // TODO: Config option to change the distance. And maybe if it is enabled at all
+        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, ItemStack.EMPTY.getItem(), level().dimension(), true, true, Config.get().deathMarkers.distance);
         getMarkers().add(marker);
 
         DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);

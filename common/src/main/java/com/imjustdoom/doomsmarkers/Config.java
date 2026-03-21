@@ -1,0 +1,83 @@
+package com.imjustdoom.doomsmarkers;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.annotations.SerializedName;
+
+import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+
+public class Config {
+    @SerializedName("max_markers")
+    public int maxMarkers = 50;
+
+    @SerializedName("death_markers")
+    public DeathMarkers deathMarkers = new DeathMarkers();
+
+    @SerializedName("allowed_dimensions")
+    public Dimensions dimensions = new Dimensions();
+
+    private static final Gson GSON = new GsonBuilder()
+            .setPrettyPrinting()
+            .disableHtmlEscaping()
+            .create();
+
+    private static final String CONFIG_FILE_NAME = "dooms-markers-config.json";
+    private static Config INSTANCE;
+
+    public static Config get() {
+        if (INSTANCE == null) {
+            INSTANCE = loadConfig();
+        }
+        return INSTANCE;
+    }
+
+    private static Config loadConfig() {
+        Path configFile = Path.of(CONFIG_FILE_NAME);
+        Config config = new Config();
+
+        if (Files.exists(configFile)) {
+            try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
+                Config loaded = GSON.fromJson(reader, Config.class);
+                if (loaded != null) {
+                    return loaded;
+                }
+            } catch (Exception e) {
+                DoomsMarkers.LOG.error("Failed to load config file: ", e);
+            }
+        }
+
+        saveConfig(config);
+        return config;
+    }
+
+    private static void saveConfig(Config config) {
+        try (Writer writer = new FileWriter(CONFIG_FILE_NAME, StandardCharsets.UTF_8)) {
+            GSON.toJson(config, writer);
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Failed to save config file: ", e);
+        }
+    }
+
+    public static class DeathMarkers {
+        @SerializedName("enabled")
+        public boolean enabled = true;
+
+        @SerializedName("remove_when_nearby_distance")
+        public int distance = 5;
+    }
+
+    public static class Dimensions {
+        @SerializedName("whitelist")
+        public boolean whitelist = false;
+
+        @SerializedName("dimensions")
+        public List<String> allowedDimensions = new ArrayList<>();
+    }
+}

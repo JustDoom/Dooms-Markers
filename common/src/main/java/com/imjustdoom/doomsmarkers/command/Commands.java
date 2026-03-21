@@ -1,10 +1,7 @@
 package com.imjustdoom.doomsmarkers.command;
 
 import com.google.common.base.Stopwatch;
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
-import com.imjustdoom.doomsmarkers.Marker;
-import com.imjustdoom.doomsmarkers.MarkerLite;
-import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
+import com.imjustdoom.doomsmarkers.*;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgument;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerLiteArgument;
 import com.mojang.brigadier.CommandDispatcher;
@@ -87,8 +84,8 @@ public class Commands {
         ServerPlayerInterface serverPlayerLayer = (ServerPlayerInterface) serverPlayer;
 
         // Handle marker limits
-        if (serverPlayerLayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
-            context.getSource().sendFailure(Component.literal(serverPlayer.getName().getString() + " is at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :("));
+        if (serverPlayerLayer.getMarkers().size() >= Config.get().maxMarkers) {
+            context.getSource().sendFailure(Component.literal(serverPlayer.getName().getString() + " is at the max of " + Config.get().maxMarkers + " markers :("));
             return 1;
         }
 

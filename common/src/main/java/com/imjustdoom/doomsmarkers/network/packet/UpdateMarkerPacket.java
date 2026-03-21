@@ -19,11 +19,9 @@ public class UpdateMarkerPacket implements PacketHandler {
     @Override
     public void handle(Player player, FriendlyByteBuf data) {
         if (player instanceof ServerPlayer serverPlayer) {
-            System.out.println("Handle update");
             ServerPlayerInterface markerPlayer = (ServerPlayerInterface) serverPlayer;
             Marker loaded = Marker.getMarkerFromBuffer(data);
             if (loaded == null) {
-                System.out.println("Null");
                 return;
             }
 

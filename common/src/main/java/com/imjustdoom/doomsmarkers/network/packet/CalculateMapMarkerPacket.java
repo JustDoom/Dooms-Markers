@@ -1,9 +1,6 @@
 package com.imjustdoom.doomsmarkers.network.packet;
 
-import com.imjustdoom.doomsmarkers.ColourUtil;
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
-import com.imjustdoom.doomsmarkers.Marker;
-import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
+import com.imjustdoom.doomsmarkers.*;
 import com.imjustdoom.doomsmarkers.network.PacketHandler;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
@@ -49,8 +46,8 @@ public class CalculateMapMarkerPacket implements PacketHandler {
             }
 
             for (MapBanner banner : mapData.getBanners()) {
-                if (markerPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
-                    serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
+                if (markerPlayer.getMarkers().size() >= Config.get().maxMarkers) {
+                    serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + Config.get().maxMarkers + " markers :(").withStyle(ChatFormatting.RED));
                     return;
                 }
 
@@ -62,8 +59,8 @@ public class CalculateMapMarkerPacket implements PacketHandler {
             }
 
             for (MapDecoration decoration : mapData.getDecorations()) {
-                if (markerPlayer.getMarkers().size() >= DoomsMarkers.MAX_MARKERS_PER_PLAYER) {
-                    serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + DoomsMarkers.MAX_MARKERS_PER_PLAYER + " markers :(").withStyle(ChatFormatting.RED));
+                if (markerPlayer.getMarkers().size() >= Config.get().maxMarkers) {
+                    serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + Config.get().maxMarkers + " markers :(").withStyle(ChatFormatting.RED));
                     return;
                 }
 
