@@ -69,6 +69,9 @@ public class Commands {
                                 )
                                 .then(literal("teleport")
                                         .then(argument("marker_lite", MarkerLiteArgument.marker(context))
+                                                .then(argument("target_player", EntityArgument.player())
+                                                        .executes(Commands::markersTeleport)
+                                                )
                                                 .executes(Commands::markersTeleport)
                                         )
                                         .executes(Commands::markersMissingExistingMarker) // When any marker targets are missing
@@ -147,9 +150,16 @@ public class Commands {
         ServerPlayer serverPlayer = EntityArgument.getPlayer(context, "player");
         ServerPlayerInterface serverPlayerLayer = (ServerPlayerInterface) serverPlayer;
 
-        if (!context.getSource().isPlayer()) {
-            context.getSource().sendFailure(Component.literal("Must be player to use this command"));
-            return 1;
+        ServerPlayer targetPlayer;
+        try {
+            targetPlayer = EntityArgument.getPlayer(context, "target_player");
+        } catch (IllegalArgumentException exception) {
+            if (!context.getSource().isPlayer()) {
+                context.getSource().sendFailure(Component.literal("Must be player to use this command"));
+                return 1;
+            }
+
+            targetPlayer = context.getSource().getPlayer();
         }
 
         Set<Marker> markers = getMatchingMarkers(context, serverPlayerLayer, true);
@@ -171,14 +181,14 @@ public class Commands {
             return 1;
         }
 
-        context.getSource().getPlayer().teleportTo(level,
+        targetPlayer.teleportTo(level,
                 marker.getPosition().x(),
                 marker.getPosition().y(),
                 marker.getPosition().z(),
-                context.getSource().getPlayer().getYRot(),
-                context.getSource().getPlayer().getXRot());
+                targetPlayer.getYRot(),
+                targetPlayer.getXRot());
 
-        String message = String.format("Successfully teleported to the marker \"%s\" for player %s", marker, serverPlayer.getName().getString());
+        String message = String.format("Successfully teleported %s to the marker \"%s\" for player %s", targetPlayer.getName().getString(), marker, serverPlayer.getName().getString());
         DoomsMarkers.LOG.info(message);
         context.getSource().sendSuccess(() -> Component.literal(message), false);
 
