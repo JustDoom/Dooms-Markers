@@ -28,7 +28,7 @@ public class Config {
             .disableHtmlEscaping()
             .create();
 
-    private static final String CONFIG_FILE_NAME = "dooms-markers-config.json";
+    private static final String CONFIG_FILE_NAME = "config/dooms-markers-config.json";
     private static Config INSTANCE;
 
     public static Config get() {
