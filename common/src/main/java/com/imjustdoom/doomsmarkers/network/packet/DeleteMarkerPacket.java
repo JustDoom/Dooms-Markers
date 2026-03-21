@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers.network.packet;
 
+import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
 import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
 import com.imjustdoom.doomsmarkers.network.PacketHandler;
@@ -54,6 +55,11 @@ public class DeleteMarkerPacket implements PacketHandler {
 
                 markerPlayer.getMarkers().remove(marker);
                 return;
+            }
+        } else {
+            Marker loaded = Marker.getMarkerFromBuffer(data);
+            if (loaded != null) {
+                DoomsMarkersClient.MARKERS.remove(loaded);
             }
         }
     }

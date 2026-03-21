@@ -28,7 +28,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
@@ -52,6 +54,18 @@ public class Commands {
                                                 .executes(Commands::markersItem) // Specific marker but no structure
                                         )
                                         .executes(Commands::markersItem) // When no marker info is specified. Just use default one
+                                )
+                                .then(literal("remove")
+                                        .then(argument("marker_lite", MarkerLiteArgument.marker(context))
+                                                .then(literal("all")
+                                                        .executes(ctx -> markersRemove(ctx, false))
+                                                )
+                                                .then(literal("first")
+                                                        .executes(ctx -> markersRemove(ctx, true))
+                                                )
+                                                .executes(ctx -> markersRemove(ctx, false))
+                                        )
+                                        .executes(Commands::markersMissingExistingMarker) // When any marker targets are missing
                                 )
                                 .then(literal("teleport")
                                         .then(argument("marker_lite", MarkerLiteArgument.marker(context))
@@ -138,49 +152,97 @@ public class Commands {
             return 1;
         }
 
-        // Get the first matching marker
-        MarkerLite markerLite;
-        try {
-            markerLite = MarkerLiteArgument.getMarker(context, "marker_lite");
-        } catch (IllegalArgumentException exception) {
-            context.getSource().sendFailure(Component.literal("Unable to validate marker specifications"));
+        Set<Marker> markers = getMatchingMarkers(context, serverPlayerLayer, true);
+
+        if (markers == null) {
             return 1;
         }
 
-        Marker foundMaker = null;
-        for (Marker marker : serverPlayerLayer.getMarkers()) {
-            if ((markerLite.getUuid() == null || markerLite.getUuid().equals(marker.getUuid()))
-                && (markerLite.getType() == null || markerLite.getType().equals(marker.getType()))
-                && (markerLite.getPosition() == null || markerLite.getPosition().equals(marker.getPosition()))
-                && (markerLite.getDimension() == null || markerLite.getDimension().equals(marker.getDimension()))) {
-                foundMaker = marker;
-                break;
-            }
-        }
-
-        if (foundMaker == null) {
+        if (markers.isEmpty()) {
             context.getSource().sendFailure(Component.literal("Unable to find a matching marker :("));
             return 1;
         }
 
-        ServerLevel level = context.getSource().getServer().getLevel(foundMaker.getDimension());
+        Marker marker = markers.stream().findFirst().get();
+
+        ServerLevel level = context.getSource().getServer().getLevel(marker.getDimension());
         if (level == null) {
             context.getSource().sendFailure(Component.literal("Unable to find a matching dimension"));
             return 1;
         }
 
         context.getSource().getPlayer().teleportTo(level,
-                foundMaker.getPosition().x(),
-                foundMaker.getPosition().y(),
-                foundMaker.getPosition().z(),
+                marker.getPosition().x(),
+                marker.getPosition().y(),
+                marker.getPosition().z(),
                 context.getSource().getPlayer().getYRot(),
                 context.getSource().getPlayer().getXRot());
 
-        String message = String.format("Successfully teleported to the marker \"%s\" for player %s", markerLite, serverPlayer.getName().getString());
+        String message = String.format("Successfully teleported to the marker \"%s\" for player %s", marker, serverPlayer.getName().getString());
         DoomsMarkers.LOG.info(message);
         context.getSource().sendSuccess(() -> Component.literal(message), false);
 
         return 1;
+    }
+
+    private static int markersRemove(CommandContext<CommandSourceStack> context, boolean first) throws CommandSyntaxException {
+        ServerPlayer serverPlayer = EntityArgument.getPlayer(context, "player");
+        ServerPlayerInterface serverPlayerLayer = (ServerPlayerInterface) serverPlayer;
+
+        Set<Marker> markers = getMatchingMarkers(context, serverPlayerLayer, first);
+
+        if (markers == null) {
+            return 1;
+        }
+
+        if (markers.isEmpty()) {
+            context.getSource().sendFailure(Component.literal("Unable to find a matching marker :("));
+            return 1;
+        }
+
+        for (Marker marker : markers) {
+            serverPlayerLayer.getMarkers().remove(marker);
+            DoomsMarkers.removeMarkerFromPlayer(serverPlayer, marker);
+        }
+
+        String message = String.format("Successfully removed %d markers for player %s", markers.size(), serverPlayer.getName().getString());
+        DoomsMarkers.LOG.info(message);
+        context.getSource().sendSuccess(() -> Component.literal(message), false);
+
+        return 1;
+    }
+
+    /**
+     * Finds all matches of the markers if specified. Returns null on error or empty list for no matches
+     * @param context
+     * @param serverPlayerLayer
+     * @return
+     * @throws CommandSyntaxException
+     */
+    private static Set<Marker> getMatchingMarkers(CommandContext<CommandSourceStack> context, ServerPlayerInterface serverPlayerLayer, boolean first) throws CommandSyntaxException {
+        // Get the first matching marker
+        MarkerLite markerLite;
+        try {
+            markerLite = MarkerLiteArgument.getMarker(context, "marker_lite");
+        } catch (IllegalArgumentException exception) {
+            context.getSource().sendFailure(Component.literal("Unable to validate marker specifications"));
+            return null;
+        }
+
+        Set<Marker> markers = new HashSet<>();
+        for (Marker marker : serverPlayerLayer.getMarkers()) {
+            if ((markerLite.getUuid() == null || markerLite.getUuid().equals(marker.getUuid()))
+                    && (markerLite.getType() == null || markerLite.getType().equals(marker.getType()))
+                    && (markerLite.getPosition() == null || markerLite.getPosition().equals(marker.getPosition()))
+                    && (markerLite.getDimension() == null || markerLite.getDimension().equals(marker.getDimension()))) {
+                markers.add(marker);
+                if (first) {
+                    break;
+                }
+            }
+        }
+
+        return markers;
     }
 
     private static int markersMissingPlayer(CommandContext<CommandSourceStack> context) {

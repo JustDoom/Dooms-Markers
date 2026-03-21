@@ -31,9 +31,9 @@ public class MarkerLiteArgument implements ArgumentType<MarkerLite> {
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         if (builder.getRemaining().isEmpty()) {
             builder.suggest("[pos=0,64,0]");
-            builder.suggest("[pos=0,64,0,color=1.0,0.0,0.0]");
-            builder.suggest("[pos=0,64,0,icon=0]");
-            builder.suggest("[pos=0,64,0,icon=0,dimension=minecraft:overworld]");
+            builder.suggest("[type=player_death]");
+            builder.suggest("[dimension=minecraft:overworld]");
+            builder.suggest("[pos=0,64,0,dimension=minecraft:overworld]");
         }
         return builder.buildFuture();
     }

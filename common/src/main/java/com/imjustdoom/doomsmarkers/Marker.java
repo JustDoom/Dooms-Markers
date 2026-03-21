@@ -166,6 +166,11 @@ public class Marker {
     }
 
     @Override
+    public boolean equals(Object obj) {
+        return obj instanceof Marker marker && getUuid().equals(marker.getUuid());
+    }
+
+    @Override
     public String toString() {
         return "Marker{" +
                 "uuid=" + this.uuid +
