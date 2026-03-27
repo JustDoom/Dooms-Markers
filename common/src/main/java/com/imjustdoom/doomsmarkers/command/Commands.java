@@ -14,14 +14,14 @@ import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceOrTagKeyArgument;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet;
-import net.minecraft.core.Registry;
+import net.minecraft.core.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
 
@@ -178,10 +178,20 @@ public class Commands {
             return 1;
         }
 
+        BlockPos blockPos = new BlockPos(
+                (int) Math.floor(marker.getPosition().x()),
+                (int) Math.floor(marker.getPosition().y() - 0.75f),
+                (int) Math.floor(marker.getPosition().z()));
+
+        if (!isSafeTeleportLocation(level, blockPos)) {
+            context.getSource().sendFailure(Component.literal("The Marker does not seem to be safe to teleport to"));
+            return 1;
+        }
+
         targetPlayer.teleportTo(level,
-                marker.getPosition().x(),
-                marker.getPosition().y(),
-                marker.getPosition().z(),
+                blockPos.getX() + 0.5f,
+                blockPos.getY(),
+                blockPos.getZ() + 0.5f,
                 targetPlayer.getYRot(),
                 targetPlayer.getXRot());
 
@@ -269,5 +279,28 @@ public class Commands {
 
     private static Optional<? extends HolderSet.ListBacked<Structure>> getHolders(ResourceOrTagKeyArgument.Result<Structure> structure, Registry<Structure> structureRegistry) {
         return structure.unwrap().map((key) -> structureRegistry.getHolder(key).map(HolderSet::direct), structureRegistry::getTag);
+    }
+
+
+    private static boolean isSafeTeleportLocation(ServerLevel level, BlockPos pos) {
+        if (pos.getY() < level.getMinBuildHeight()) {
+            return false;
+        }
+
+        if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
+                || !level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()) {
+            return false;
+        }
+
+        BlockState foot = level.getBlockState(pos.below());
+        return foot.isFaceSturdy(level, pos.below(), Direction.UP) && !isDangerousBlock(foot);
+    }
+
+    private static boolean isDangerousBlock(BlockState state) {
+        return state.is(Blocks.LAVA)
+                || state.is(Blocks.FIRE)
+                || state.is(Blocks.CAMPFIRE)
+                || state.is(Blocks.POWDER_SNOW)
+                || state.is(Blocks.MAGMA_BLOCK);
     }
 }
