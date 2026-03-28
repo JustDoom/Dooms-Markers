@@ -24,6 +24,19 @@ public class AddMarkerPacket implements PacketHandler {
     public void handle(Player player, FriendlyByteBuf data) {
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayerInterface markerPlayer = (ServerPlayerInterface) serverPlayer;
+
+            if (Config.get().dimensions.whitelist) {
+                if (!Config.get().dimensions.dimensions.contains(serverPlayer.serverLevel().dimension().location().toString())) {
+                    serverPlayer.sendSystemMessage(Component.literal("You are not allowed to add Markers in this world").withStyle(ChatFormatting.RED));
+                    return;
+                }
+            } else {
+                if (Config.get().dimensions.dimensions.contains(serverPlayer.serverLevel().dimension().location().toString())) {
+                    serverPlayer.sendSystemMessage(Component.literal("You are not allowed to add Markers in this world").withStyle(ChatFormatting.RED));
+                    return;
+                }
+            }
+
             if (markerPlayer.getMarkers().size() >= Config.get().maxMarkers) {
                 serverPlayer.sendSystemMessage(Component.literal("You are at the max of " + Config.get().maxMarkers + " markers :(").withStyle(ChatFormatting.RED));
                 return;

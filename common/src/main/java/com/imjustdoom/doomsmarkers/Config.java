@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.BufferedReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
@@ -92,6 +91,6 @@ public class Config {
         public boolean whitelist = false;
 
         @SerializedName("dimensions")
-        public List<String> allowedDimensions = new ArrayList<>();
+        public List<String> dimensions = new ArrayList<>();
     }
 }
