@@ -6,10 +6,12 @@ import com.google.gson.annotations.SerializedName;
 
 import java.io.BufferedReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +60,19 @@ public class Config {
     }
 
     private static void saveConfig(Config config) {
-        try (Writer writer = new FileWriter(CONFIG_FILE_NAME, StandardCharsets.UTF_8)) {
+        Path configPath = Paths.get(CONFIG_FILE_NAME);
+        Path parentPath = configPath.getParent();
+
+        if (parentPath != null) {
+            try {
+                Files.createDirectories(parentPath);
+            } catch (IOException e) {
+                DoomsMarkers.LOG.error("Failed to create config directory: {}", parentPath, e);
+                return;
+            }
+        }
+
+        try (Writer writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
             GSON.toJson(config, writer);
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Failed to save config file: ", e);

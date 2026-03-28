@@ -8,7 +8,7 @@ Doom's Markers is a mod that adds similar functionality to map mods "Waypoints" 
 - [x] Customise Markers with Dye and items
 - [ ] Share Markers
 - [x] Integrate map markers for treasure maps etc
-- [ ] Make config options (Max markers, focus area etc)
+- [x] Make config options (Max markers, focus area etc)
 
 ## Controls
 
