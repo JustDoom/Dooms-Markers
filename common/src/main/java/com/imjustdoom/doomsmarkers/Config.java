@@ -18,6 +18,9 @@ public class Config {
     @SerializedName("max_markers")
     public int maxMarkers = 50;
 
+    @SerializedName("minimum_marker_distance")
+    public double minimumMarkerDistance = 5;
+
     @SerializedName("death_markers")
     public DeathMarkers deathMarkers = new DeathMarkers();
 

@@ -8,6 +8,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -165,6 +166,20 @@ public class Marker {
         this.removeWhenNearby = removeWhenNearby;
     }
 
+    public double distanceToSqr(Marker marker) {
+        double x = getPosition().x() - marker.getPosition().x();
+        double y = getPosition().y() - marker.getPosition().y();
+        double z = getPosition().z() - marker.getPosition().z();
+        return x * x + y * y + z * z;
+    }
+
+    public double distanceToSqr(Player player) {
+        double x = getPosition().x() - player.getX();
+        double y = getPosition().y() - player.getY();
+        double z = getPosition().z() - player.getZ();
+        return x * x + y * y + z * z;
+    }
+
     @Override
     public boolean equals(Object obj) {
         return obj instanceof Marker marker && getUuid().equals(marker.getUuid());
@@ -198,5 +213,22 @@ public class Marker {
             DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
             return null;
         }
+    }
+
+    /**
+     * Uses player instead of another marker because the location displayed is to the player and not a marker
+     * This makes it less confusing for any players
+     * @param player
+     * @param markers
+     * @return
+     */
+    public static boolean hasMarkerWithinDistance(Player player, List<Marker> markers) {
+        for (Marker marker : markers) {
+            if (Math.sqrt(marker.distanceToSqr(player)) < Config.get().minimumMarkerDistance) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
