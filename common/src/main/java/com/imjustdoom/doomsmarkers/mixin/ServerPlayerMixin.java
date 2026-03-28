@@ -42,7 +42,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             return;
         }
 
-        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, ItemStack.EMPTY.getItem(), level().dimension(), true, true, Config.get().deathMarkers.distance);
+        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, ItemStack.EMPTY.getItem(), level().dimension(), true, false, Config.get().deathMarkers.distance);
         getMarkers().add(marker);
 
         DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);
