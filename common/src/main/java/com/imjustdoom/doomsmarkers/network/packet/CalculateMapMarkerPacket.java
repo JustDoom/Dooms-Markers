@@ -31,6 +31,18 @@ public class CalculateMapMarkerPacket implements PacketHandler {
         if (player instanceof ServerPlayer serverPlayer) {
             ServerPlayerInterface markerPlayer = (ServerPlayerInterface) serverPlayer;
 
+            if (Config.get().dimensions.whitelist) {
+                if (!Config.get().dimensions.dimensions.contains(serverPlayer.serverLevel().dimension().location().toString())) {
+                    serverPlayer.sendSystemMessage(Component.literal("You are not allowed to add Markers in this world").withStyle(ChatFormatting.RED));
+                    return;
+                }
+            } else {
+                if (Config.get().dimensions.dimensions.contains(serverPlayer.serverLevel().dimension().location().toString())) {
+                    serverPlayer.sendSystemMessage(Component.literal("You are not allowed to add Markers in this world").withStyle(ChatFormatting.RED));
+                    return;
+                }
+            }
+
             // Get item in hand and make sure it is a valid item
             ItemStack itemStack = serverPlayer.getItemInHand(serverPlayer.getUsedItemHand());
             if (itemStack.getItem() != Items.FILLED_MAP) {
