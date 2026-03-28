@@ -47,7 +47,7 @@ public class AddMarkerPacket implements PacketHandler {
                 return;
             }
 
-            boolean hasNearby = Marker.hasMarkerWithinDistance(serverPlayer, markerPlayer.getMarkers());
+            boolean hasNearby = Config.get().minimumMarkerDistance != -1 && Marker.hasMarkerWithinDistance(serverPlayer, markerPlayer.getMarkers());
             if (hasNearby) {
                 serverPlayer.sendSystemMessage(Component.literal("There is a Marker within " + Config.get().minimumMarkerDistance + "m, which is too close").withStyle(ChatFormatting.RED));
                 return;
