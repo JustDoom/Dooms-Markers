@@ -7,6 +7,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 
 @Mod(DoomsMarkers.MOD_ID)
@@ -20,7 +21,7 @@ public class DoomsMarkersNeoForge {
             event.register(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
         });
 
-        eventBus.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
+        NeoForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedInEvent event) -> {
             ServerPlayer player = (ServerPlayer) event.getEntity();
             player.connection.send(new ClientboundCustomPayloadPacket(new ClientboundMarkerSyncPayload(((ServerPlayerInterface) player).getMarkers())));
         });

@@ -4,15 +4,12 @@ import com.imjustdoom.doomsmarkers.payload.ServerboundAddMarkerPayload;
 import com.imjustdoom.doomsmarkers.payload.ServerboundDeleteMarkerPayload;
 import com.imjustdoom.doomsmarkers.payload.ServerboundUpdateMarkerPayload;
 import com.mojang.blaze3d.platform.InputConstants;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeItem;
@@ -25,8 +22,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DoomsMarkersClient {
-    public static final KeyMapping MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.use", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.doomsmarkers");
-    public static final KeyMapping TOGGLE_MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.doomsmarkers");
+    private static final KeyMapping.Category DOOMS_MARKERS_CATEGORY = new KeyMapping.Category(ResourceLocation.parse("key.categories.doomsmarkers"));
+    public static final KeyMapping MARKER_KEY_MAPPING = new KeyMapping(
+            "category.doomsmarkers.use",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_GRAVE_ACCENT,
+            DOOMS_MARKERS_CATEGORY);
+    public static final KeyMapping TOGGLE_MARKER_KEY_MAPPING = new KeyMapping(
+            "category.doomsmarkers.toggle",
+            InputConstants.Type.KEYSYM,
+            GLFW.GLFW_KEY_M,
+            DOOMS_MARKERS_CATEGORY);
 
     public static final List<Marker> FOCUSED_MARKERS = new ArrayList<>();
     public static final List<Marker> MARKERS = new ArrayList<>();
@@ -54,7 +60,7 @@ public class DoomsMarkersClient {
                 .rotate(Axis.YP.rotationDegrees(camera.getYRot() + 180.0f))
                 .translate(-cameraPos.x, -cameraPos.y, -cameraPos.z);
 
-        double fov = minecraft.options.fov().get(); // * minecraft.player.getFieldOfViewModifier();
+        float fov = minecraft.options.fov().get(); // * minecraft.player.getFieldOfViewModifier();
         Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(fov);
 
         for (Marker marker : new ArrayList<>(DoomsMarkersClient.MARKERS)) {
@@ -108,34 +114,27 @@ public class DoomsMarkersClient {
                 }
             }
 
-            PoseStack pose = context.pose();
-            pose.pushPose();
-            pose.translate(screenX - size / 2f, screenY - size / 2f, 0);
-            pose.scale(scale, scale, 1f);
+            var pose = context.pose();
+            pose.pushMatrix();
+            pose.translate(screenX - size / 2f, screenY - size / 2f);
+            pose.scale(scale, scale);
 
-            RenderSystem.setShader(GameRenderer::getPositionTexShader);
+            float alpha = focused ? 1.0f : 0.5f;
+
             if (marker.getIconIndex() == -1) {
-                RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 0.5f);
                 context.renderItem(marker.getItemIcon(), 0, 0);
-                RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
             } else {
                 ResourceLocation icon = DoomsMarkers.MARKER_ICONS.get(marker.getIconIndex());
-                RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
-                RenderSystem.setShaderTexture(0, icon);
-                RenderSystem.enableBlend();
                 context.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
             }
 
             Font font = minecraft.font;
             int textWidth = font.width(distanceText);
-            pose.translate(8 - textWidth / 2.0, 16, 0);
+            pose.translate(8.0f - textWidth / 2.0f, 16.0f);
             context.drawString(font, distanceText, 0, 0, 0xFFFFFF);
 
-            RenderSystem.disableBlend();
-            pose.popPose();
+            pose.popMatrix();
         }
-
-        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     public static void sendMarkerToServer(Marker marker) {
