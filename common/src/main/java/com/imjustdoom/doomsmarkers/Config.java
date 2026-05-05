@@ -23,6 +23,9 @@ public class Config {
     @SerializedName("minimum_marker_distance")
     public double minimumMarkerDistance = 5;
 
+    @SerializedName("compress_unit")
+    public boolean compressUnit = true;
+
     @SerializedName("death_markers")
     public DeathMarkers deathMarkers = new DeathMarkers();
 

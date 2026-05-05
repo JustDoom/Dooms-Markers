@@ -96,8 +96,10 @@ public class DoomsMarkersClient {
             float screenX = (float) ((context.guiWidth() / 2.0f) * (1.0f + clipPos.x / clipPos.w));
             float screenY = (float) ((context.guiHeight() / 2.0f) * (1.0f - clipPos.y / clipPos.w));
 
-            double distance = Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
-            String distanceText = String.format("%.0fm", distance);
+            double distance = Math.round(Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z)));
+            String distanceText = Config.get().compressUnit && distance >= 1000
+                    ? String.format("%.1fkm", distance / 1000f)
+                    : String.format("%dm", distance);
 
             if (distance <= marker.getRemoveWhenNearby()) {
                 it.remove();
