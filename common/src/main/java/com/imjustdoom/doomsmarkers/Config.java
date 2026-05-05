@@ -2,6 +2,8 @@ package com.imjustdoom.doomsmarkers;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.BufferedReader;
@@ -44,21 +46,50 @@ public class Config {
 
     private static Config loadConfig() {
         Path configFile = Path.of(CONFIG_FILE_NAME);
-        Config config = new Config();
+        Config defaults = new Config();
 
         if (Files.exists(configFile)) {
             try (BufferedReader reader = Files.newBufferedReader(configFile, StandardCharsets.UTF_8)) {
-                Config loaded = GSON.fromJson(reader, Config.class);
-                if (loaded != null) {
-                    return loaded;
+                JsonObject loadedJson = GSON.fromJson(reader, JsonObject.class);
+                if (loadedJson != null) {
+                    Config config = GSON.fromJson(merge(GSON.toJsonTree(defaults).getAsJsonObject(), loadedJson), Config.class);
+                    saveConfig(config);
+                    return config;
                 }
             } catch (Exception e) {
                 DoomsMarkers.LOG.error("Failed to load config file: ", e);
             }
         }
 
-        saveConfig(config);
-        return config;
+        saveConfig(defaults);
+        return defaults;
+    }
+
+    private static JsonObject merge(JsonObject defaults, JsonObject loaded) {
+        JsonObject merged = new JsonObject();
+        for (String key : defaults.keySet()) {
+            JsonElement defaultVal = defaults.get(key);
+            if (loaded.has(key)) {
+                JsonElement loadedVal = loaded.get(key);
+                if (loadedVal.isJsonNull()) {
+                    merged.add(key, defaultVal);
+                } else if (defaultVal.isJsonObject() && loadedVal.isJsonObject()) {
+                    merged.add(key, merge(defaultVal.getAsJsonObject(), loadedVal.getAsJsonObject()));
+                } else {
+                    merged.add(key, loadedVal);
+                }
+            } else {
+                merged.add(key, defaultVal);
+            }
+        }
+
+        for (String key : loaded.keySet()) {
+            if (!merged.has(key)) {
+                merged.add(key, loaded.get(key));
+            }
+        }
+
+        return merged;
     }
 
     private static void saveConfig(Config config) {
