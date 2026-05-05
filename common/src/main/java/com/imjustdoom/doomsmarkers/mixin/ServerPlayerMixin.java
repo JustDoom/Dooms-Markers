@@ -10,6 +10,7 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -80,6 +81,12 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
         }
+    }
+
+    @Inject(at = @At("TAIL"), method = "restoreFrom")
+    public void restoreFrom(ServerPlayer that, boolean keepEverything, CallbackInfo ci) {
+        this.doomsMarkers$markers.clear();
+        this.doomsMarkers$markers.addAll(((ServerPlayerInterface) that).getMarkers());
     }
 
     @Override
