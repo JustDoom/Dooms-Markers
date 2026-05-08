@@ -53,14 +53,14 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
     public void addAdditionalSaveData(CompoundTag compoundTag, CallbackInfo ci) {
         ServerPlayer player = (ServerPlayer) (Object) this;
         if (getMarkers().isEmpty()) {
-            DoomsMarkers.LOG.info("No Markers exist for {} to save", player.getName().getString());
+            DoomsMarkers.LOG.debug("No Markers exist for {} to save", player.getName().getString());
             return;
         }
 
         try {
             Tag encodedList = Marker.CODEC.listOf().encodeStart(NbtOps.INSTANCE, getMarkers()).getOrThrow(false, null);
             compoundTag.put("Markers", encodedList);
-            DoomsMarkers.LOG.info("Saved {} markers for {}", getMarkers().size(), player.getName().getString());
+            DoomsMarkers.LOG.debug("Saved {} markers for {}", getMarkers().size(), player.getName().getString());
         } catch (Exception e) {
             DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
         }
