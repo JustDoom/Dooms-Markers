@@ -13,7 +13,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
-import org.slf4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.Level;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
@@ -25,13 +27,30 @@ import java.util.List;
 public class DoomsMarkers {
     public static final String MOD_ID = "doomsmarkers";
     public static final String MOD_NAME = "Doom's Markers";
-    public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
+    public static final Logger LOG = (Logger) LogManager.getLogger(MOD_NAME);
 
     public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
 
     // Add icons to the icon list
     public static void init() {
         Config.get();
+
+        System.out.println("Log level " + Config.get().logging.toLowerCase());
+        switch (Config.get().logging.toLowerCase()) {
+            case "warn":
+                LOG.setLevel(Level.WARN);
+                break;
+            case "error":
+                LOG.setLevel(Level.ERROR);
+                break;
+            case "debug":
+                LOG.setLevel(Level.DEBUG);
+                break;
+            default:
+                break;
+        }
+
+        System.out.println("Logging " + LOG.getLevel());
 
         PacketRegistry.register(new AddMarkerPacket());
         PacketRegistry.register(new CalculateMapMarkerPacket());

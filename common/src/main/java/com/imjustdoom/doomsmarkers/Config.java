@@ -26,6 +26,9 @@ public class Config {
     @SerializedName("compress_unit")
     public boolean compressUnit = true;
 
+    @SerializedName("logging")
+    public String logging = "INFO";
+
     @SerializedName("death_markers")
     public DeathMarkers deathMarkers = new DeathMarkers();
 
