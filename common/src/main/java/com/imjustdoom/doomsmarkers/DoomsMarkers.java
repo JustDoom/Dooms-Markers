@@ -35,7 +35,6 @@ public class DoomsMarkers {
     public static void init() {
         Config.get();
 
-        System.out.println("Log level " + Config.get().logging.toLowerCase());
         switch (Config.get().logging.toLowerCase()) {
             case "warn":
                 LOG.setLevel(Level.WARN);
@@ -49,8 +48,6 @@ public class DoomsMarkers {
             default:
                 break;
         }
-
-        System.out.println("Logging " + LOG.getLevel());
 
         PacketRegistry.register(new AddMarkerPacket());
         PacketRegistry.register(new CalculateMapMarkerPacket());
