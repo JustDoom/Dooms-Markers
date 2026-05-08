@@ -99,7 +99,7 @@ public class DoomsMarkersClient {
             double distance = Math.round(Math.sqrt(minecraft.player.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z)));
             String distanceText = Config.get().compressUnit && distance >= 1000
                     ? String.format("%.1fkm", distance / 1000f)
-                    : String.format("%dm", distance);
+                    : String.format("%dm", (int) distance);
 
             if (distance <= marker.getRemoveWhenNearby()) {
                 it.remove();
