@@ -22,7 +22,10 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
@@ -138,8 +141,16 @@ public class Commands {
                     structure.unwrap().map((key) -> key.location().toString(), (tag) -> "#" + tag.location() + " (" +
                             pair.getSecond().unwrapKey().map((key) -> key.location().toString()).orElse("[unregistered]") + ")"),
                     timer.elapsed().toMillis());
-            Vec3 pos = pair.getFirst().getCenter();
-            return new Vec3(pos.x, 69, pos.z);
+
+            BlockPos found = pair.getFirst();
+            ChunkAccess chunk = level.getChunk(SectionPos.blockToSectionCoord(found.getX()),
+                    SectionPos.blockToSectionCoord(found.getZ()), ChunkStatus.STRUCTURE_STARTS);
+            StructureStart start = level.structureManager().getStartForStructure(SectionPos.bottomOf(chunk), pair.getSecond().value(), chunk);
+            boolean hasStart = start != null && start.isValid();
+            BlockPos marker = hasStart ? start.getBoundingBox().getCenter() : found;
+
+            Vec3 pos = marker.getCenter();
+            return new Vec3(pos.x, hasStart ? pos.y : 69, pos.z);
         }
     }
 
