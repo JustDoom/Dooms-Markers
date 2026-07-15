@@ -101,10 +101,14 @@ public class DoomsMarkersClient {
                     ? String.format("%.1fkm", distance / 1000f)
                     : String.format("%dm", (int) distance);
 
-            if (distance <= marker.getRemoveWhenNearby()) {
-                it.remove();
-                sendRemoveMarker(minecraft, marker);
-                continue;
+            if (marker.getRemoveWhenNearby() != -1) {
+                if (distance > marker.getRemoveWhenNearby()) {
+                    marker.setRemoveArmed(true);
+                } else if (marker.isRemoveArmed()) {
+                    it.remove();
+                    sendRemoveMarker(minecraft, marker);
+                    continue;
+                }
             }
 
             float scale = 1f;

@@ -43,6 +43,7 @@ public class Marker {
     private boolean canPlayerRemove;
     private boolean canPlayerCustomise;
     private int removeWhenNearby;
+    private boolean removeArmed = false;
 
     public Marker(String type)  {
         this(type, null, List.of(1f, 1f, 1f, 1f), 0, ItemStack.EMPTY.getItem(), Level.OVERWORLD, true, true, -1);
@@ -138,6 +139,7 @@ public class Marker {
         return this.dimension;
     }
 
+
     public void setDimension(ResourceKey<Level> dimension) {
         this.dimension = dimension;
     }
@@ -164,6 +166,14 @@ public class Marker {
 
     public void setRemoveWhenNearby(int removeWhenNearby) {
         this.removeWhenNearby = removeWhenNearby;
+    }
+
+    public boolean isRemoveArmed() {
+        return this.removeArmed;
+    }
+
+    public void setRemoveArmed(boolean removeArmed) {
+        this.removeArmed = removeArmed;
     }
 
     public double distanceToSqr(Marker marker) {

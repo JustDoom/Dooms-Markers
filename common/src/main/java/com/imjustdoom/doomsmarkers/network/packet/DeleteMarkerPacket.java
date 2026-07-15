@@ -38,7 +38,7 @@ public class DeleteMarkerPacket implements PacketHandler {
                     continue;
                 }
 
-                if (marker.getRemoveWhenNearby() != -1) {
+                if (marker.getRemoveWhenNearby() != -1 && serverPlayer.isAlive()) {
                     double distance = Math.sqrt(serverPlayer.distanceToSqr(marker.getPosition().x, marker.getPosition().y, marker.getPosition().z));
                     if (distance <= marker.getRemoveWhenNearby()) {
                         markerPlayer.getMarkers().remove(marker);
