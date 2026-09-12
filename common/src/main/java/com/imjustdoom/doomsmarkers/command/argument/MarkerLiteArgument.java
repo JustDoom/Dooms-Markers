@@ -8,10 +8,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
 
 import java.util.concurrent.CompletableFuture;
 
-public class MarkerLiteArgument implements ArgumentType<MarkerLite> {
+public class MarkerLiteArgument implements ArgumentType<MarkerLiteParser> {
     public static MarkerLiteArgument marker(CommandBuildContext context) {
         return new MarkerLiteArgument(context);
     }
@@ -23,7 +24,7 @@ public class MarkerLiteArgument implements ArgumentType<MarkerLite> {
     }
 
     @Override
-    public MarkerLite parse(StringReader reader) throws CommandSyntaxException {
+    public MarkerLiteParser parse(StringReader reader) throws CommandSyntaxException {
         return MarkerLiteParser.parse(reader, this.context);
     }
 
@@ -31,6 +32,7 @@ public class MarkerLiteArgument implements ArgumentType<MarkerLite> {
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         if (builder.getRemaining().isEmpty()) {
             builder.suggest("[pos=0,64,0]");
+            builder.suggest("[pos=~,~,~]");
             builder.suggest("[type=player_death]");
             builder.suggest("[dimension=minecraft:overworld]");
             builder.suggest("[pos=0,64,0,dimension=minecraft:overworld]");
@@ -38,7 +40,7 @@ public class MarkerLiteArgument implements ArgumentType<MarkerLite> {
         return builder.buildFuture();
     }
 
-    public static MarkerLite getMarker(CommandContext<?> context, String name) {
-        return context.getArgument(name, MarkerLite.class);
+    public static MarkerLite getMarker(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, MarkerLiteParser.class).toMarkerLite(context.getSource());
     }
 }

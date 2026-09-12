@@ -261,7 +261,7 @@ public class Commands {
         for (Marker marker : serverPlayerLayer.getMarkers()) {
             if ((markerLite.getUuid() == null || markerLite.getUuid().equals(marker.getUuid()))
                     && (markerLite.getType() == null || markerLite.getType().equals(marker.getType()))
-                    && (markerLite.getPosition() == null || markerLite.getPosition().equals(marker.getPosition()))
+                    && (markerLite.getPosition() == null || markerLite.getPosition().equals(marker.getPosition()) || markerLite.getPosition().add(0, 0.75f, 0).equals(marker.getPosition()))
                     && (markerLite.getDimension() == null || markerLite.getDimension().equals(marker.getDimension()))) {
                 markers.add(marker);
                 if (first) {

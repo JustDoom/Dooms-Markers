@@ -6,13 +6,16 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.arguments.coordinates.Coordinates;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinate;
+import net.minecraft.commands.arguments.coordinates.WorldCoordinates;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.UUID;
 
@@ -33,7 +36,7 @@ public class MarkerLiteParser {
 
     private UUID uuid;
     private String type;
-    private Vec3 position;
+    private Coordinates position;
     private ResourceKey<Level> dimension;
 
     public MarkerLiteParser(StringReader reader, CommandBuildContext context) {
@@ -41,7 +44,7 @@ public class MarkerLiteParser {
         this.commandBuildContext = context;
     }
 
-    private MarkerLite parse() throws CommandSyntaxException {
+    private MarkerLiteParser parse() throws CommandSyntaxException {
         this.reader.skipWhitespace();
 
         if (this.reader.canRead() && this.reader.peek() == '[') {
@@ -54,7 +57,11 @@ public class MarkerLiteParser {
             }
         }
 
-        return new MarkerLite(this.uuid, this.type, this.position, this.dimension);
+        return this;
+    }
+
+    public MarkerLite toMarkerLite(CommandSourceStack source) {
+        return new MarkerLite(this.uuid, this.type, this.position == null ? null : this.position.getPosition(source), this.dimension);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -99,32 +106,49 @@ public class MarkerLiteParser {
         switch (key.toLowerCase()) {
             case "uuid", "id" -> this.uuid = UUID.fromString(parseString());
             case "type" -> this.type = parseString();
-            case "pos", "position" -> this.position = parseVec3();
+            case "pos", "position" -> this.position = parseCoordinates();
             case "dim", "dimension" -> this.dimension = parseDimension();
             default -> throw ERROR_UNKNOWN_PROPERTY.create(key);
         }
     }
 
-    private Vec3 parseVec3() throws CommandSyntaxException {
-        double x = parseFloat();
-        expectComma();
-        double y = parseFloat();
-        expectComma();
-        double z = parseFloat();
-        return new Vec3(x, y, z);
+    private Coordinates parseCoordinates() throws CommandSyntaxException {
+        WorldCoordinate x = parseCoordinate();
+        expectSeparator();
+        WorldCoordinate y = parseCoordinate();
+        expectSeparator();
+        WorldCoordinate z = parseCoordinate();
+        return new WorldCoordinates(x, y, z);
     }
 
-    private void expectComma() throws CommandSyntaxException {
+    private WorldCoordinate parseCoordinate() throws CommandSyntaxException {
+        if (!this.reader.canRead() || this.reader.peek() != '~') {
+            return new WorldCoordinate(false, parseFloat());
+        }
+
+        this.reader.skip();
+        boolean hasOffset = this.reader.canRead() && isNumberChar(this.reader.peek());
+        return new WorldCoordinate(true, hasOffset ? parseFloat() : 0);
+    }
+
+    private void expectSeparator() throws CommandSyntaxException {
+        boolean separated = this.reader.canRead() && Character.isWhitespace(this.reader.peek());
         this.reader.skipWhitespace();
-        if (!this.reader.canRead() || this.reader.read() != ',') {
+
+        if (this.reader.canRead() && this.reader.peek() == ',') {
+            this.reader.skip();
+            this.reader.skipWhitespace();
+            separated = true;
+        }
+
+        if (!separated) {
             throw new SimpleCommandExceptionType(Component.literal("Expected ','")).createWithContext(this.reader);
         }
-        this.reader.skipWhitespace();
     }
 
     private float parseFloat() throws CommandSyntaxException {
         int start = this.reader.getCursor();
-        while (this.reader.canRead() && (Character.isDigit(this.reader.peek()) || this.reader.peek() == '.' || this.reader.peek() == '-')) {
+        while (this.reader.canRead() && isNumberChar(this.reader.peek())) {
             this.reader.skip();
         }
 
@@ -177,7 +201,11 @@ public class MarkerLiteParser {
         return c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '_' || c == ':' || c == '.' || c == '-';
     }
 
-    public static MarkerLite parse(StringReader reader, CommandBuildContext context) throws CommandSyntaxException {
+    private boolean isNumberChar(char c) {
+        return Character.isDigit(c) || c == '.' || c == '-';
+    }
+
+    public static MarkerLiteParser parse(StringReader reader, CommandBuildContext context) throws CommandSyntaxException {
         return new MarkerLiteParser(reader, context).parse();
     }
 }

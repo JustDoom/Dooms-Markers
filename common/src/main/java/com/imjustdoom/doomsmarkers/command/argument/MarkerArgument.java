@@ -8,10 +8,11 @@ import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.commands.CommandBuildContext;
+import net.minecraft.commands.CommandSourceStack;
 
 import java.util.concurrent.CompletableFuture;
 
-public class MarkerArgument implements ArgumentType<Marker> {
+public class MarkerArgument implements ArgumentType<MarkerParser> {
     public static MarkerArgument marker(CommandBuildContext context) {
         return new MarkerArgument(context);
     }
@@ -23,7 +24,7 @@ public class MarkerArgument implements ArgumentType<Marker> {
     }
 
     @Override
-    public Marker parse(StringReader reader) throws CommandSyntaxException {
+    public MarkerParser parse(StringReader reader) throws CommandSyntaxException {
         return MarkerParser.parse(reader, this.context);
     }
 
@@ -31,6 +32,7 @@ public class MarkerArgument implements ArgumentType<Marker> {
     public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> context, SuggestionsBuilder builder) {
         if (builder.getRemaining().isEmpty()) {
             builder.suggest("[pos=0,64,0]");
+            builder.suggest("[pos=~,~,~]");
             builder.suggest("[pos=0,64,0,color=1.0,0.0,0.0]");
             builder.suggest("[pos=0,64,0,icon=0]");
             builder.suggest("[pos=0,64,0,icon=0,dimension=minecraft:overworld]");
@@ -38,7 +40,7 @@ public class MarkerArgument implements ArgumentType<Marker> {
         return builder.buildFuture();
     }
 
-    public static Marker getMarker(CommandContext<?> context, String name) {
-        return context.getArgument(name, Marker.class);
+    public static Marker getMarker(CommandContext<CommandSourceStack> context, String name) {
+        return context.getArgument(name, MarkerParser.class).toMarker(context.getSource());
     }
 }
