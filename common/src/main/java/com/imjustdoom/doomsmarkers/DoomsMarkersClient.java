@@ -161,12 +161,12 @@ public class DoomsMarkersClient {
             pose.scale(scale, scale, 1f);
 
             RenderSystem.setShader(GameRenderer::getPositionTexShader);
-            if (marker.getIconIndex() == -1) {
+            if (marker.getIcon().equals(Markers.CUSTOM_ITEM)) {
                 RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 0.5f);
                 context.renderItem(marker.getItemIcon(), 0, 0);
                 RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
             } else {
-                ResourceLocation icon = DoomsMarkers.MARKER_ICONS.get(marker.getIconIndex());
+                ResourceLocation icon = marker.getIcon().resourceLocation();
                 RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
                 RenderSystem.setShaderTexture(0, icon);
                 RenderSystem.enableBlend();
@@ -204,7 +204,7 @@ public class DoomsMarkersClient {
      * @param marker
      */
     private static void sendUpdateIcon(Minecraft minecraft, Marker marker) {
-        marker.setIconIndex(-1);
+        marker.setIcon(Markers.CUSTOM_ITEM, true); // Set the index so scrolling resumes from the custom item icon
         marker.setItemIcon(minecraft.player.getItemInHand(minecraft.player.getUsedItemHand()).getItem());
         KEY_USED_THIS_HOLD = true;
 

@@ -1,6 +1,7 @@
 package com.imjustdoom.doomsmarkers.command.argument;
 
 import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.Markers;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
@@ -34,6 +35,8 @@ public class MarkerParser {
             new SimpleCommandExceptionType(Component.literal("Invalid number"));
     private static final DynamicCommandExceptionType ERROR_UNKNOWN_ITEM =
             new DynamicCommandExceptionType(item -> Component.literal("Unknown item: " + item));
+    private static final DynamicCommandExceptionType ERROR_UNKNOWN_ICON =
+            new DynamicCommandExceptionType(icon -> Component.literal("Unknown icon: " + icon));
     private static final DynamicCommandExceptionType ERROR_UNKNOWN_DIMENSION =
             new DynamicCommandExceptionType(dimension -> Component.literal("Unknown dimension: " + dimension));
 
@@ -43,7 +46,7 @@ public class MarkerParser {
     private String type = "custom";
     private Coordinates position;
     private List<Float> colour = List.of(1.0f, 1.0f, 1.0f);
-    private int iconIndex = 0;
+    private String icon = Markers.DOT.name();
     private Item itemIcon = Items.AIR;
     private ResourceKey<Level> dimension; // Leave blank because it will default to the players dimension if null
     private boolean canPlayerRemove = true;
@@ -73,7 +76,7 @@ public class MarkerParser {
 
     public Marker toMarker(CommandSourceStack source) {
         Vec3 pos = this.position == null ? null : this.position.getPosition(source);
-        return new Marker(this.type, pos, this.colour, this.iconIndex, this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise, this.removeWhenNearby);
+        return new Marker(this.type, pos, this.colour, Markers.getIconByName(this.icon), this.itemIcon, this.dimension, this.canPlayerRemove, this.canPlayerCustomise, this.removeWhenNearby);
     }
 
     private void parseProperties() throws CommandSyntaxException {
@@ -119,9 +122,9 @@ public class MarkerParser {
             case "type" -> this.type = parseString();
             case "pos", "position" -> this.position = parseCoordinates();
             case "color", "colour" -> this.colour = parseColorList();
-            case "icon", "iconindex" -> this.iconIndex = parseInt();
+            case "icon", "iconindex" -> this.icon = parseIcon();
             case "item" -> {
-                this.iconIndex = -1;
+                this.icon = Markers.CUSTOM_ITEM.name();
                 this.itemIcon = parseItem();
             }
             case "dim", "dimension" -> this.dimension = parseDimension();
@@ -221,6 +224,14 @@ public class MarkerParser {
         }
 
         return this.reader.getString().substring(start, this.reader.getCursor());
+    }
+
+    private String parseIcon() throws CommandSyntaxException {
+        final String icon = parseString();
+        if (Markers.getIconByName(icon) == null) {
+            throw ERROR_UNKNOWN_ICON.createWithContext(this.reader, icon);
+        }
+        return icon;
     }
 
     private Item parseItem() throws CommandSyntaxException {

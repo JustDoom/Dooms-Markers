@@ -2,6 +2,7 @@ package com.imjustdoom.doomsmarkers.mixin;
 
 import com.imjustdoom.doomsmarkers.DoomsMarkersClient;
 import com.imjustdoom.doomsmarkers.Marker;
+import com.imjustdoom.doomsmarkers.Markers;
 import com.imjustdoom.doomsmarkers.network.packet.AddMarkerPacket;
 import com.imjustdoom.doomsmarkers.network.packet.CalculateMapMarkerPacket;
 import io.netty.buffer.Unpooled;
@@ -56,7 +57,7 @@ public abstract class ClientMinecraftMixin {
                 minecraft.player.connection.send(new ServerboundCustomPayloadPacket(CalculateMapMarkerPacket.CALCULATE_MAP_MARKER_PACKET, new FriendlyByteBuf(Unpooled.buffer())));
             } else {
                 Vec3 pos = minecraft.player.position();
-                Marker marker = new Marker("player_made", new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), 1, ItemStack.EMPTY.getItem(), minecraft.player.level().dimension(), true, true, -1);
+                Marker marker = new Marker("player_made", new Vec3(pos.x, pos.y + 0.75f, pos.z), List.of(1f, 1f, 1f, 1f), Markers.DOT, Items.AIR, minecraft.player.level().dimension(), true, true, -1);
                 DoomsMarkersClient.sendEncodedMarker(minecraft, marker, AddMarkerPacket.ADD_MARKER_PACKET);
             }
         }

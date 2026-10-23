@@ -1,19 +1,15 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
-import com.imjustdoom.doomsmarkers.Config;
-import com.imjustdoom.doomsmarkers.DoomsMarkers;
-import com.imjustdoom.doomsmarkers.Marker;
-import com.imjustdoom.doomsmarkers.ServerPlayerInterface;
+import com.imjustdoom.doomsmarkers.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -43,7 +39,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
             return;
         }
 
-        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), 4, ItemStack.EMPTY.getItem(), level().dimension(), true, false, Config.get().deathMarkers.distance);
+        Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), Markers.DEATH, Items.AIR, level().dimension(), true, false, Config.get().deathMarkers.distance);
         getMarkers().add(marker);
 
         DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);

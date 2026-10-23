@@ -8,18 +8,13 @@ import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
+import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.Level;
-import org.slf4j.LoggerFactory;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Handles the shared and server only code
@@ -28,8 +23,6 @@ public class DoomsMarkers {
     public static final String MOD_ID = "doomsmarkers";
     public static final String MOD_NAME = "Doom's Markers";
     public static final Logger LOG = (Logger) LogManager.getLogger(MOD_NAME);
-
-    public static final List<ResourceLocation> MARKER_ICONS = new ArrayList<>();
 
     // Add icons to the icon list
     public static void init() {
@@ -54,15 +47,6 @@ public class DoomsMarkers {
         PacketRegistry.register(new DeleteMarkerPacket());
         PacketRegistry.register(new SyncMarkerPacket());
         PacketRegistry.register(new UpdateMarkerPacket());
-
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/block_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/diamond_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/monster_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/square_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/grave_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/skele_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/nether_portal_marker.png"));
-        MARKER_ICONS.add(new ResourceLocation("doomsmarkers", "textures/end_portal_marker.png"));
     }
 
     public static void sendMarkerToPlayer(ServerPlayer player, Marker marker) {

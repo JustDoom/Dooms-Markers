@@ -11,11 +11,14 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class Marker {
@@ -24,20 +27,21 @@ public class Marker {
             Codec.STRING.optionalFieldOf("type", "player_made").forGetter(Marker::getType),
             Vec3.CODEC.fieldOf("position").forGetter(Marker::getPosition),
             Codec.FLOAT.listOf().fieldOf("colour").forGetter(Marker::getColour),
-            Codec.INT.fieldOf("iconIndex").forGetter(Marker::getIconIndex),
+            Codec.STRING.optionalFieldOf("icon").forGetter(marker -> Optional.of(marker.getIcon().name())), // Optional so it is compatible with old worlds
+            Codec.INT.optionalFieldOf("iconIndex", -1).forGetter(marker -> -1), // Handle the old icon saving system
             ItemStack.CODEC.fieldOf("itemIcon").forGetter(Marker::getItemIcon),
             Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", Level.OVERWORLD).forGetter(Marker::getDimension),
             Codec.BOOL.optionalFieldOf("canPlayerRemove", true).forGetter(Marker::canPlayerRemove),
             Codec.BOOL.optionalFieldOf("canPlayerCustomise", true).forGetter(Marker::canPlayerCustomise),
             Codec.INT.optionalFieldOf("removeWhenNearby", -1).forGetter(Marker::getRemoveWhenNearby)
-    ).apply(instance, Marker::new));
+    ).apply(instance, Marker::createFromCodec));
 
     private UUID uuid;
     private String type; // This is a manual id/type used mainly for modpack devs. It can specify the type of marker. Does not need to be unique
 //    private String title; // TODO: A title that shows up when hovered. Use a nametag to rename
     private Vec3 position;
     private List<Float> colour;
-    private int iconIndex;
+    private MarkerIcon icon;
     private ItemStack itemIcon;
     private ResourceKey<Level> dimension;
     private boolean canPlayerRemove;
@@ -45,27 +49,31 @@ public class Marker {
     private int removeWhenNearby;
     private boolean removeArmed = false;
 
+    private int iconIndex; // Only used for scrolling through icons, not stored
+
     public Marker(String type)  {
-        this(type, null, List.of(1f, 1f, 1f, 1f), 0, ItemStack.EMPTY.getItem(), Level.OVERWORLD, true, true, -1);
+        this(type, null, List.of(1f, 1f, 1f, 1f), Markers.DOT, Items.AIR, Level.OVERWORLD, true, true, -1);
     }
 
-    public Marker(String type, Vec3 position, List<Float> colour, int iconIndex, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
-        this(UUID.randomUUID(), type, position, colour, iconIndex, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+    public Marker(String type, Vec3 position, List<Float> colour, MarkerIcon icon, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
+        this(UUID.randomUUID(), type, position, colour, icon, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
     }
 
     // TODO: Maybe make a builder for this since this is getting a bit much
-    public Marker(UUID uuid, String type, Vec3 position, List<Float> colour, int iconIndex, ItemStack itemIcon,
+    public Marker(UUID uuid, String type, Vec3 position, List<Float> colour, MarkerIcon icon, ItemStack itemIcon,
                   ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
         this.uuid = uuid;
         this.type = type;
         this.position = position;
         this.colour = colour;
-        this.iconIndex = iconIndex;
+        this.icon = icon;
         this.itemIcon = itemIcon;
         this.dimension = dimension;
         this.canPlayerRemove = canPlayerRemove;
         this.canPlayerCustomise = canPlayerCustomise;
         this.removeWhenNearby = removeWhenNearby;
+
+        this.iconIndex = Markers.MARKER_ICONS.indexOf(icon);
     }
 
     public UUID getUuid() {
@@ -100,12 +108,17 @@ public class Marker {
         this.colour = new ArrayList<>(colour);
     }
 
-    public int getIconIndex() {
-        return this.iconIndex;
+    public MarkerIcon getIcon() {
+        return this.icon;
     }
 
-    public void setIconIndex(int iconIndex) {
-        this.iconIndex = iconIndex;
+    public void setIcon(@NotNull MarkerIcon icon) {
+        setIcon(icon, false);
+    }
+
+    public void setIcon(@NotNull MarkerIcon icon, boolean setIndex) {
+        this.icon = icon;
+        if (setIndex) this.iconIndex = Markers.MARKER_ICONS.indexOf(icon);
     }
 
     /**
@@ -115,23 +128,25 @@ public class Marker {
      */
     public void changeIconIndex(boolean negative) {
         if (negative) {
-            if (this.iconIndex-- <= -1) {
-                this.iconIndex = DoomsMarkers.MARKER_ICONS.size() - 1;
+            this.iconIndex--;
+            if ((this.iconIndex == 0 && getItemIcon().isEmpty()) || this.iconIndex < 0) {
+                this.iconIndex = Markers.MARKER_ICONS.size() - 1;
             }
         } else {
-            if (this.iconIndex + 1 >= DoomsMarkers.MARKER_ICONS.size()) {
-                this.iconIndex = -1;
-            } else {
-                this.iconIndex++;
-            }
+            if (this.iconIndex + 1 >= Markers.MARKER_ICONS.size())
+                this.iconIndex = getItemIcon().isEmpty() ? 1 : 0;
+            else this.iconIndex++;
         }
+
+        if (this.iconIndex == 0) setIcon(Markers.CUSTOM_ITEM);
+        else setIcon(Markers.MARKER_ICONS.get(this.iconIndex));
     }
 
     public ItemStack getItemIcon() {
         return this.itemIcon;
     }
 
-    public void setItemIcon(Item itemIcon) {
+    public void setItemIcon(@NotNull Item itemIcon) {
         this.itemIcon = new ItemStack(itemIcon);
     }
 
@@ -202,7 +217,7 @@ public class Marker {
                 ", type=" + this.type +
                 ", position=" + this.position +
                 ", colour=" + this.colour +
-                ", iconIndex=" + this.iconIndex +
+                ", icon=" + this.icon +
                 ", itemIcon=" + this.itemIcon +
                 ", dimension=" + this.dimension +
                 ", canPlayerRemove=" + this.canPlayerRemove +
@@ -240,5 +255,19 @@ public class Marker {
         }
 
         return false;
+    }
+
+    private static Marker createFromCodec(UUID uuid, String type, Vec3 position, List<Float> colour,
+                                          Optional<String> icon, int iconIndex, ItemStack itemIcon,
+                                          ResourceKey<Level> dimension, boolean canPlayerRemove,
+                                          boolean canPlayerCustomise, int removeWhenNearby) {
+        MarkerIcon actualIcon = icon.isPresent() ? Markers.getIconByName(icon.get()) : indexToIcon(iconIndex);
+        return new Marker(uuid, type, position, colour, actualIcon, itemIcon, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+    }
+
+    private static MarkerIcon indexToIcon(int index) {
+        if (index == -1) return Markers.CUSTOM_ITEM;
+        if (index < 0 || index >= Markers.MARKER_ICONS.size()) return Markers.DOT;
+        return Markers.MARKER_ICONS.get(index);
     }
 }
