@@ -1,5 +1,6 @@
 package com.imjustdoom.doomsmarkers;
 
+import com.imjustdoom.doomsmarkers.util.ColourUtil;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.UUIDUtil;
@@ -14,8 +15,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -112,11 +113,11 @@ public class Marker {
         return this.icon;
     }
 
-    public void setIcon(@NotNull MarkerIcon icon) {
+    public void setIcon(@Nonnull MarkerIcon icon) {
         setIcon(icon, false);
     }
 
-    public void setIcon(@NotNull MarkerIcon icon, boolean setIndex) {
+    public void setIcon(@Nonnull MarkerIcon icon, boolean setIndex) {
         this.icon = icon;
         if (setIndex) this.iconIndex = Markers.MARKER_ICONS.indexOf(icon);
     }
@@ -146,7 +147,7 @@ public class Marker {
         return this.itemIcon;
     }
 
-    public void setItemIcon(@NotNull Item itemIcon) {
+    public void setItemIcon(@Nonnull Item itemIcon) {
         this.itemIcon = new ItemStack(itemIcon);
     }
 
@@ -226,37 +227,6 @@ public class Marker {
                 '}';
     }
 
-    public static Marker getMarkerFromBuffer(FriendlyByteBuf data) {
-        CompoundTag wrapper = data.readNbt();
-        if (wrapper == null || !wrapper.contains("data", Tag.TAG_COMPOUND)) {
-            return null;
-        }
-
-        try {
-            return Marker.CODEC.parse(NbtOps.INSTANCE, wrapper.getCompound("data")).getOrThrow(false, null);
-        } catch (Exception e) {
-            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
-            return null;
-        }
-    }
-
-    /**
-     * Uses player instead of another marker because the location displayed is to the player and not a marker
-     * This makes it less confusing for any players
-     * @param player
-     * @param markers
-     * @return
-     */
-    public static boolean hasMarkerWithinDistance(Player player, List<Marker> markers) {
-        for (Marker marker : markers) {
-            if (Math.sqrt(marker.distanceToSqr(player)) < Config.get().minimumMarkerDistance) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private static Marker createFromCodec(UUID uuid, String type, Vec3 position, List<Float> colour,
                                           Optional<String> icon, int iconIndex, ItemStack itemIcon,
                                           ResourceKey<Level> dimension, boolean canPlayerRemove,
@@ -269,5 +239,19 @@ public class Marker {
         if (index == -1) return Markers.CUSTOM_ITEM;
         if (index < 0 || index >= Markers.MARKER_ICONS.size()) return Markers.DOT;
         return Markers.MARKER_ICONS.get(index);
+    }
+
+    public static Marker getMarkerFromBuffer(FriendlyByteBuf data) {
+        CompoundTag wrapper = data.readNbt();
+        if (wrapper == null || !wrapper.contains("data", Tag.TAG_COMPOUND)) {
+            return null;
+        }
+
+        try {
+            return Marker.CODEC.parse(NbtOps.INSTANCE, wrapper.getCompound("data")).getOrThrow(false, null);
+        } catch (Exception e) {
+            DoomsMarkers.LOG.error("Unable to encode the Markers: ", e);
+            return null;
+        }
     }
 }

@@ -2,6 +2,8 @@ package com.imjustdoom.doomsmarkers.network.packet;
 
 import com.imjustdoom.doomsmarkers.*;
 import com.imjustdoom.doomsmarkers.network.PacketHandler;
+import com.imjustdoom.doomsmarkers.util.PositionUtil;
+import com.imjustdoom.doomsmarkers.util.ServerUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -47,7 +49,7 @@ public class AddMarkerPacket implements PacketHandler {
                 return;
             }
 
-            boolean hasNearby = Config.get().minimumMarkerDistance != -1 && Marker.hasMarkerWithinDistance(serverPlayer, markerPlayer.getMarkers());
+            boolean hasNearby = Config.get().minimumMarkerDistance != -1 && PositionUtil.hasMarkerWithinDistance(serverPlayer, markerPlayer.getMarkers());
             if (hasNearby) {
                 serverPlayer.sendSystemMessage(Component.literal("There is a Marker within " + Config.get().minimumMarkerDistance + "m, which is too close").withStyle(ChatFormatting.RED));
                 return;
@@ -55,7 +57,7 @@ public class AddMarkerPacket implements PacketHandler {
 
             loaded.setDimension(serverPlayer.serverLevel().dimension());
             markerPlayer.getMarkers().add(loaded);
-            DoomsMarkers.sendMarkerToPlayer(serverPlayer, loaded);
+            ServerUtil.sendMarkerToPlayer(serverPlayer, loaded);
         } else {
             CompoundTag wrapper = data.readNbt();
             if (wrapper != null && wrapper.contains("data", Tag.TAG_COMPOUND)) {

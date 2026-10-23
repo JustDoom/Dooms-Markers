@@ -1,7 +1,6 @@
 package com.imjustdoom.doomsmarkers;
 
-import org.jetbrains.annotations.NotNull;
-
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -42,7 +41,7 @@ public class Markers {
     public static final MarkerIcon PORTAL = registerMarkerIcon("portal");
     public static final MarkerIcon EYE_OF_ENDER = registerMarkerIcon("eye_of_ender");
 
-    public static MarkerIcon registerMarkerIcon(@NotNull final String name) {
+    public static MarkerIcon registerMarkerIcon(@Nonnull final String name) {
         MarkerIcon marker = new MarkerIcon(name);
         MARKER_ICONS_BY_NAME.put(marker.name(), marker);
         MARKER_ICONS.add(marker);

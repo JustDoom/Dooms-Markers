@@ -1,6 +1,7 @@
 package com.imjustdoom.doomsmarkers.mixin;
 
 import com.imjustdoom.doomsmarkers.*;
+import com.imjustdoom.doomsmarkers.util.ServerUtil;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
@@ -42,7 +43,7 @@ public abstract class ServerPlayerMixin extends LivingEntity implements ServerPl
         Marker marker = new Marker("player_death", new Vec3(position().x, position().y + 0.75f, position().z), List.of(1f, 1f, 1f, 1f), Markers.DEATH, Items.AIR, level().dimension(), true, false, Config.get().deathMarkers.distance);
         getMarkers().add(marker);
 
-        DoomsMarkers.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);
+        ServerUtil.sendMarkerToPlayer((ServerPlayer) (Object) this, marker);
     }
 
     @Inject(at = @At("TAIL"), method = "addAdditionalSaveData")

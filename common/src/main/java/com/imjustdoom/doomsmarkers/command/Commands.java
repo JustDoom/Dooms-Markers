@@ -4,6 +4,8 @@ import com.google.common.base.Stopwatch;
 import com.imjustdoom.doomsmarkers.*;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerArgument;
 import com.imjustdoom.doomsmarkers.command.argument.MarkerLiteArgument;
+import com.imjustdoom.doomsmarkers.util.PositionUtil;
+import com.imjustdoom.doomsmarkers.util.ServerUtil;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -19,9 +21,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.levelgen.structure.Structure;
@@ -115,7 +114,7 @@ public class Commands {
 
         // Save marker and send it
         serverPlayerLayer.getMarkers().add(marker);
-        DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);
+        ServerUtil.sendMarkerToPlayer(serverPlayer, marker);
 
         String message = String.format("Successfully created the marker \"%s\" for player %s", marker, serverPlayer.getName().getString());
         DoomsMarkers.LOG.info(message);
@@ -194,7 +193,7 @@ public class Commands {
                 (int) Math.floor(marker.getPosition().y() - 0.75f),
                 (int) Math.floor(marker.getPosition().z()));
 
-        if (!isSafeTeleportLocation(level, blockPos)) {
+        if (!PositionUtil.isSafeTeleportLocation(level, blockPos)) {
             context.getSource().sendFailure(Component.literal("The Marker does not seem to be safe to teleport to"));
             return 1;
         }
@@ -230,7 +229,7 @@ public class Commands {
 
         for (Marker marker : markers) {
             serverPlayerLayer.getMarkers().remove(marker);
-            DoomsMarkers.removeMarkerFromPlayer(serverPlayer, marker);
+            ServerUtil.removeMarkerFromPlayer(serverPlayer, marker);
         }
 
         String message = String.format("Successfully removed %d markers for player %s", markers.size(), serverPlayer.getName().getString());
@@ -259,10 +258,10 @@ public class Commands {
 
         Set<Marker> markers = new HashSet<>();
         for (Marker marker : serverPlayerLayer.getMarkers()) {
-            if ((markerLite.getUuid() == null || markerLite.getUuid().equals(marker.getUuid()))
-                    && (markerLite.getType() == null || markerLite.getType().equals(marker.getType()))
-                    && (markerLite.getPosition() == null || markerLite.getPosition().equals(marker.getPosition()) || markerLite.getPosition().add(0, 0.75f, 0).equals(marker.getPosition()))
-                    && (markerLite.getDimension() == null || markerLite.getDimension().equals(marker.getDimension()))) {
+            if ((markerLite.uuid() == null || markerLite.uuid().equals(marker.getUuid()))
+                    && (markerLite.type() == null || markerLite.type().equals(marker.getType()))
+                    && (markerLite.position() == null || markerLite.position().equals(marker.getPosition()) || markerLite.position().add(0, 0.75f, 0).equals(marker.getPosition()))
+                    && (markerLite.dimension() == null || markerLite.dimension().equals(marker.getDimension()))) {
                 markers.add(marker);
                 if (first) {
                     break;
@@ -292,26 +291,4 @@ public class Commands {
         return structure.unwrap().map((key) -> structureRegistry.getHolder(key).map(HolderSet::direct), structureRegistry::getTag);
     }
 
-
-    private static boolean isSafeTeleportLocation(ServerLevel level, BlockPos pos) {
-        if (pos.getY() < level.getMinBuildHeight()) {
-            return false;
-        }
-
-        if (!level.getBlockState(pos).getCollisionShape(level, pos).isEmpty()
-                || !level.getBlockState(pos.above()).getCollisionShape(level, pos.above()).isEmpty()) {
-            return false;
-        }
-
-        BlockState foot = level.getBlockState(pos.below());
-        return foot.isFaceSturdy(level, pos.below(), Direction.UP) && !isDangerousBlock(foot);
-    }
-
-    private static boolean isDangerousBlock(BlockState state) {
-        return state.is(Blocks.LAVA)
-                || state.is(Blocks.FIRE)
-                || state.is(Blocks.CAMPFIRE)
-                || state.is(Blocks.POWDER_SNOW)
-                || state.is(Blocks.MAGMA_BLOCK);
-    }
 }

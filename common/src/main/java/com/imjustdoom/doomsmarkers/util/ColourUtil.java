@@ -1,4 +1,4 @@
-package com.imjustdoom.doomsmarkers;
+package com.imjustdoom.doomsmarkers.util;
 
 import java.util.List;
 

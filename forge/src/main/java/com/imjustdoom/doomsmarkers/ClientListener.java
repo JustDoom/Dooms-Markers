@@ -11,7 +11,7 @@ import net.minecraftforge.fml.common.Mod;
 public class ClientListener {
     @SubscribeEvent
     public static void onDrawOverlay(RenderGuiOverlayEvent.Post event) {
-        if (event.getOverlay() != VanillaGuiOverlay.AIR_LEVEL.type()) {
+        if (event.getOverlay() != VanillaGuiOverlay.CROSSHAIR.type()) {
             return;
         }
 

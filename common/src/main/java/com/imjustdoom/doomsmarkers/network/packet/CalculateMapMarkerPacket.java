@@ -2,6 +2,9 @@ package com.imjustdoom.doomsmarkers.network.packet;
 
 import com.imjustdoom.doomsmarkers.*;
 import com.imjustdoom.doomsmarkers.network.PacketHandler;
+import com.imjustdoom.doomsmarkers.util.ColourUtil;
+import com.imjustdoom.doomsmarkers.util.PositionUtil;
+import com.imjustdoom.doomsmarkers.util.ServerUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -67,7 +70,7 @@ public class CalculateMapMarkerPacket implements PacketHandler {
                 Marker marker = new Marker("map", new Vec3(banner.getPos().getX(), banner.getPos().getY() + 0.75f, banner.getPos().getZ()), colour, Markers.FLAG, Items.AIR, serverPlayer.serverLevel().dimension(), true, false, -1);
                 markerPlayer.getMarkers().add(marker);
 
-                DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);
+                ServerUtil.sendMarkerToPlayer(serverPlayer, marker);
             }
 
             for (MapDecoration decoration : mapData.getDecorations()) {
@@ -93,11 +96,11 @@ public class CalculateMapMarkerPacket implements PacketHandler {
                 } else {
                     colour = List.of(1f, 1f, 1f, 1f);
                 }
-                Marker marker = new Marker("map", DoomsMarkers.getWorldPosFromDecoration(mapData, decoration), colour, Markers.FLAG, Items.AIR, serverPlayer.serverLevel().dimension(), true, false, -1);
+                Marker marker = new Marker("map", PositionUtil.getWorldPosFromDecoration(mapData, decoration), colour, Markers.FLAG, Items.AIR, serverPlayer.serverLevel().dimension(), true, false, -1);
 
                 markerPlayer.getMarkers().add(marker);
 
-                DoomsMarkers.sendMarkerToPlayer(serverPlayer, marker);
+                ServerUtil.sendMarkerToPlayer(serverPlayer, marker);
             }
         }
     }
