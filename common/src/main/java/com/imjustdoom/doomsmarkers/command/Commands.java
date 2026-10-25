@@ -7,6 +7,7 @@ import com.imjustdoom.doomsmarkers.command.argument.MarkerLiteArgument;
 import com.imjustdoom.doomsmarkers.util.PositionUtil;
 import com.imjustdoom.doomsmarkers.util.ServerUtil;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType;
@@ -70,6 +71,20 @@ public class Commands {
                                         .then(argument("marker_lite", MarkerLiteArgument.marker(context))
                                                 .then(argument("target_player", EntityArgument.player())
                                                         .executes(Commands::markersTeleport)
+                                                )
+                                                .then(argument("minimum_range", IntegerArgumentType.integer(0))
+                                                        .then(argument("maximum_range", IntegerArgumentType.integer(0))
+                                                                .then(argument("attempts", IntegerArgumentType.integer(1))
+                                                                        .then(argument("target_player", EntityArgument.player())
+                                                                                .executes(Commands::markersTeleport)
+                                                                        )
+                                                                        .executes(Commands::markersTeleport)
+                                                                )
+                                                                .then(argument("target_player", EntityArgument.player())
+                                                                        .executes(Commands::markersTeleport)
+                                                                )
+                                                                .executes(Commands::markersTeleport)
+                                                        )
                                                 )
                                                 .executes(Commands::markersTeleport)
                                         )
@@ -154,37 +169,79 @@ public class Commands {
     }
 
     private static int markersTeleport(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ServerPlayer serverPlayer = EntityArgument.getPlayer(context, "player");
-        ServerPlayerInterface serverPlayerLayer = (ServerPlayerInterface) serverPlayer;
+        // The player who owns the marker
+        ServerPlayer markerOwner = EntityArgument.getPlayer(context, "player");
+        ServerPlayerInterface markerOwnerInterface = (ServerPlayerInterface) markerOwner;
+        CommandSourceStack source = context.getSource();
 
+        // Get the target player to teleport to the marker. Throws if not specified which is then handled to just
+        // teleport the sender to it instead
         ServerPlayer targetPlayer;
         try {
             targetPlayer = EntityArgument.getPlayer(context, "target_player");
         } catch (IllegalArgumentException exception) {
-            if (!context.getSource().isPlayer()) {
-                context.getSource().sendFailure(Component.literal("Must be player to use this command"));
+            if (!source.isPlayer()) {
+                source.sendFailure(Component.literal("Must be player to use this command"));
                 return 1;
             }
 
-            targetPlayer = context.getSource().getPlayer();
+            targetPlayer = source.getPlayer();
         }
 
-        Set<Marker> markers = getMatchingMarkers(context, serverPlayerLayer, true);
-
+        // Find the first matching marker. Does not find by closest distance
+        final Set<Marker> markers = getMatchingMarkers(context, markerOwnerInterface, true);
         if (markers == null) {
             return 1;
         }
 
         if (markers.isEmpty()) {
-            context.getSource().sendFailure(Component.literal("Unable to find a matching marker :("));
+            source.sendFailure(Component.literal("Unable to find a matching marker :("));
             return 1;
         }
 
-        Marker marker = markers.stream().findFirst().get();
+        final Marker marker = markers.stream().findFirst().get();
 
-        ServerLevel level = context.getSource().getServer().getLevel(marker.getDimension());
+        // Get the dimension to teleport to
+        ServerLevel level = source.getServer().getLevel(marker.getDimension());
         if (level == null) {
-            context.getSource().sendFailure(Component.literal("Unable to find a matching dimension"));
+            source.sendFailure(Component.literal("Unable to find a matching dimension"));
+            return 1;
+        }
+
+        Integer min = null;
+        Integer max = null;
+        int attempts = 10;
+        try {
+            min = IntegerArgumentType.getInteger(context, "minimum_range");
+            max = IntegerArgumentType.getInteger(context, "maximum_range");
+            attempts = IntegerArgumentType.getInteger(context, "attempts");
+        } catch (IllegalArgumentException ignored) {}
+
+        // Handle the range teleport option
+        if (min != null && max != null) {
+            if (min > max) {
+                source.sendFailure(Component.literal("minimum_range can not be bigger than maximum_range"));
+                return 1;
+            }
+
+            Optional<BlockPos> optionalBlockPos = PositionUtil.findSafeTeleportPosition(level, marker.getPosition(), min, max, attempts);
+            if (optionalBlockPos.isEmpty()) {
+                source.sendFailure(Component.literal("Unable to find suitable position to teleport to"));
+                return 1;
+            }
+
+            BlockPos blockPos = optionalBlockPos.get();
+            targetPlayer.teleportTo(level,
+                    blockPos.getX() + 0.5f,
+                    blockPos.getY(),
+                    blockPos.getZ() + 0.5f,
+                    targetPlayer.getYRot(),
+                    targetPlayer.getXRot());
+
+            String message = String.format("Successfully teleported %s to the marker \"%s\" for player %s", targetPlayer.getName().getString(), marker, markerOwner.getName().getString());
+            DoomsMarkers.LOG.info(message);
+            source.sendSuccess(() -> Component.literal(message), false);
+
             return 1;
         }
 
@@ -194,7 +251,7 @@ public class Commands {
                 (int) Math.floor(marker.getPosition().z()));
 
         if (!PositionUtil.isSafeTeleportLocation(level, blockPos)) {
-            context.getSource().sendFailure(Component.literal("The Marker does not seem to be safe to teleport to"));
+            source.sendFailure(Component.literal("The Marker does not seem to be safe to teleport to"));
             return 1;
         }
 
@@ -205,9 +262,9 @@ public class Commands {
                 targetPlayer.getYRot(),
                 targetPlayer.getXRot());
 
-        String message = String.format("Successfully teleported %s to the marker \"%s\" for player %s", targetPlayer.getName().getString(), marker, serverPlayer.getName().getString());
+        String message = String.format("Successfully teleported %s to the marker \"%s\" for player %s", targetPlayer.getName().getString(), marker, markerOwner.getName().getString());
         DoomsMarkers.LOG.info(message);
-        context.getSource().sendSuccess(() -> Component.literal(message), false);
+        source.sendSuccess(() -> Component.literal(message), false);
 
         return 1;
     }
@@ -244,9 +301,8 @@ public class Commands {
      * @param context
      * @param serverPlayerLayer
      * @return
-     * @throws CommandSyntaxException
      */
-    private static Set<Marker> getMatchingMarkers(CommandContext<CommandSourceStack> context, ServerPlayerInterface serverPlayerLayer, boolean first) throws CommandSyntaxException {
+    private static Set<Marker> getMatchingMarkers(CommandContext<CommandSourceStack> context, ServerPlayerInterface serverPlayerLayer, boolean first) {
         // Get the first matching marker
         MarkerLite markerLite;
         try {

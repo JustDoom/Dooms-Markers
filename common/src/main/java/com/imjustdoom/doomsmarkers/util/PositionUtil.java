@@ -5,14 +5,19 @@ import com.imjustdoom.doomsmarkers.Marker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.saveddata.maps.MapDecoration;
 import net.minecraft.world.level.saveddata.maps.MapItemSavedData;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
+import java.util.Optional;
 
 public class PositionUtil {
     /**
@@ -75,5 +80,37 @@ public class PositionUtil {
                 || state.is(Blocks.CAMPFIRE)
                 || state.is(Blocks.POWDER_SNOW)
                 || state.is(Blocks.MAGMA_BLOCK);
+    }
+
+    // TODO: Maybe avoid specific structures?
+    public static Optional<BlockPos> findSafeTeleportPosition(ServerLevel level, Vec3 center, double minRadius, double maxRadius, int maxAttempts) {
+        if (minRadius < 0 || maxRadius < minRadius) {
+            return Optional.empty();
+        }
+
+        RandomSource random = level.getRandom();
+        BlockPos centerPos = BlockPos.containing(center);
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            double angle = random.nextDouble() * Math.PI * 2.0;
+
+            double radius = Math.sqrt(minRadius * minRadius + random.nextDouble() * (maxRadius * maxRadius - minRadius * minRadius));
+            int x = centerPos.getX() + (int) Math.round(Math.cos(angle) * radius);
+            int z = centerPos.getZ() + (int) Math.round(Math.sin(angle) * radius);
+
+            ChunkAccess chunk = level.getChunk(x >> 4, z >> 4, ChunkStatus.FULL, true);
+            int surfaceY = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, x, z);
+            if (surfaceY <= level.getMinBuildHeight()) {
+                continue;
+            }
+
+            BlockPos feet = new BlockPos(x, surfaceY + 1, z);
+
+            if (isSafeTeleportLocation(level, feet)) {
+                return Optional.of(feet);
+            }
+        }
+
+        return Optional.empty();
     }
 }
