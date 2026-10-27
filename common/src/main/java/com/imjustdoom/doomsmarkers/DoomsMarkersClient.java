@@ -167,14 +167,16 @@ public class DoomsMarkersClient {
         pose.translate(screenX - size / 2f, screenY - size / 2f, 0);
         pose.scale(scale, scale, 1f);
 
+        float alpha = focused ? 1 : 0.5f * (1 - (scale - 1));
+
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         if (marker.getIcon().equals(Markers.CUSTOM_ITEM)) {
             RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 0.5f);
             context.renderItem(marker.getItemIcon(), 0, 0);
-            RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
+            RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha);
         } else {
             ResourceLocation icon = marker.getIcon().resourceLocation();
-            RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), focused ? 1 : 0.5f);
+            RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha);
             RenderSystem.setShaderTexture(0, icon);
             context.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
         }
