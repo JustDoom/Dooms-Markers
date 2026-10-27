@@ -34,7 +34,8 @@ public class Marker {
             Level.RESOURCE_KEY_CODEC.optionalFieldOf("dimension", Level.OVERWORLD).forGetter(Marker::getDimension),
             Codec.BOOL.optionalFieldOf("canPlayerRemove", true).forGetter(Marker::canPlayerRemove),
             Codec.BOOL.optionalFieldOf("canPlayerCustomise", true).forGetter(Marker::canPlayerCustomise),
-            Codec.INT.optionalFieldOf("removeWhenNearby", -1).forGetter(Marker::getRemoveWhenNearby)
+            Codec.INT.optionalFieldOf("removeWhenNearby", -1).forGetter(Marker::getRemoveWhenNearby),
+            Codec.LONG.optionalFieldOf("creationTime", 0L).forGetter(Marker::getCreationTime)
     ).apply(instance, Marker::createFromCodec));
 
     private UUID uuid;
@@ -49,6 +50,7 @@ public class Marker {
     private boolean canPlayerCustomise;
     private int removeWhenNearby;
     private boolean removeArmed = false;
+    private long creationTime;
 
     private int iconIndex; // Only used for scrolling through icons, not stored
 
@@ -57,12 +59,13 @@ public class Marker {
     }
 
     public Marker(String type, Vec3 position, List<Float> colour, MarkerIcon icon, Item itemIcon, ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
-        this(UUID.randomUUID(), type, position, colour, icon, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+        this(UUID.randomUUID(), type, position, colour, icon, new ItemStack(itemIcon), dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby, System.currentTimeMillis());
     }
 
     // TODO: Maybe make a builder for this since this is getting a bit much
     public Marker(UUID uuid, String type, Vec3 position, List<Float> colour, MarkerIcon icon, ItemStack itemIcon,
-                  ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby) {
+                  ResourceKey<Level> dimension, boolean canPlayerRemove, boolean canPlayerCustomise, int removeWhenNearby,
+                  long creationTime) {
         this.uuid = uuid;
         this.type = type;
         this.position = position;
@@ -73,6 +76,7 @@ public class Marker {
         this.canPlayerRemove = canPlayerRemove;
         this.canPlayerCustomise = canPlayerCustomise;
         this.removeWhenNearby = removeWhenNearby;
+        this.creationTime = creationTime;
 
         this.iconIndex = Markers.MARKER_ICONS.indexOf(icon);
     }
@@ -192,6 +196,10 @@ public class Marker {
         this.removeArmed = removeArmed;
     }
 
+    public long getCreationTime() {
+        return this.creationTime;
+    }
+
     public double distanceToSqr(Marker marker) {
         double x = getPosition().x() - marker.getPosition().x();
         double y = getPosition().y() - marker.getPosition().y();
@@ -230,9 +238,9 @@ public class Marker {
     private static Marker createFromCodec(UUID uuid, String type, Vec3 position, List<Float> colour,
                                           Optional<String> icon, int iconIndex, ItemStack itemIcon,
                                           ResourceKey<Level> dimension, boolean canPlayerRemove,
-                                          boolean canPlayerCustomise, int removeWhenNearby) {
+                                          boolean canPlayerCustomise, int removeWhenNearby, long creationTime) {
         MarkerIcon actualIcon = icon.isPresent() ? Markers.getIconByName(icon.get()) : indexToIcon(iconIndex);
-        return new Marker(uuid, type, position, colour, actualIcon, itemIcon, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby);
+        return new Marker(uuid, type, position, colour, actualIcon, itemIcon, dimension, canPlayerRemove, canPlayerCustomise, removeWhenNearby, creationTime);
     }
 
     private static MarkerIcon indexToIcon(int index) {

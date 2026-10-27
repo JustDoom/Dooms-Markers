@@ -3,7 +3,7 @@ package com.imjustdoom.doomsmarkers;
 import com.imjustdoom.doomsmarkers.util.ClientUtil;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.KeyMapping;
@@ -75,9 +75,11 @@ public class DoomsMarkersClient {
         // Get the projection matrix from fov without any fov modifier. Having it causes the sprinting state change look bad with marker positions
         Matrix4f projectionMatrix = minecraft.gameRenderer.getProjectionMatrix(minecraft.options.fov().get()); // * minecraft.player.getFieldOfViewModifier();
 
+        long currentTime = System.currentTimeMillis();
+
         Iterator<Marker> it = DoomsMarkersClient.MARKERS.iterator();
         while (it.hasNext()) {
-            renderMarker(it, context, currentDimension, minecraft, modelView, projectionMatrix);
+            renderMarker(it, context, currentDimension, minecraft, modelView, projectionMatrix, currentTime);
         }
 
         RenderSystem.setShaderColor(1, 1, 1, 1);
@@ -86,7 +88,8 @@ public class DoomsMarkersClient {
         RenderSystem.disableBlend();
     }
 
-    private static void renderMarker(Iterator<Marker> it, GuiGraphics context, ResourceKey<Level> currentDimension, Minecraft minecraft, Matrix4f modelView, Matrix4f projectionMatrix) {
+    private static void renderMarker(Iterator<Marker> it, GuiGraphics context, ResourceKey<Level> currentDimension,
+                                     Minecraft minecraft, Matrix4f modelView, Matrix4f projectionMatrix, long currentTime) {
         final Marker marker = it.next();
         if (!marker.getDimension().equals(currentDimension)) {
             return;
@@ -120,7 +123,7 @@ public class DoomsMarkersClient {
 
         float scale = 1f;
         if (distance <= 10) {
-            scale = 1f + (1f - (float) (distance / 10));
+            scale += (1f - (float) (distance / 10));
         }
 
         // Don't render if off screen
@@ -167,24 +170,62 @@ public class DoomsMarkersClient {
         pose.translate(screenX - size / 2f, screenY - size / 2f, 0);
         pose.scale(scale, scale, 1f);
 
-        float alpha = focused ? 1 : 0.5f * (1 - (scale - 1));
+        // Handle the alpha level of the marker. Focused is always fully visible
+        // Distance or creation time can affect the visibility level
+        float alpha;
+        if (focused) {
+            alpha = 1;
+            System.out.println("Focused " + alpha);
+        } else if (scale == 1) { // Scale is 1 if over 10 blocks away
+            alpha = 0.5f;
+            System.out.println("Far " + alpha);
+        } else {
+            alpha = 0.5f * (1 - (scale - 1));
+            long timeSinceCreation = currentTime - marker.getCreationTime();
+            if (timeSinceCreation < 5000 && distance < 3) {
+                alpha = Math.max(1 - timeSinceCreation / 5000f, alpha);
+            }
+            System.out.println("Close " + alpha);
+        }
+
+        alpha = 0.5f;
 
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha);
+
         if (marker.getIcon().equals(Markers.CUSTOM_ITEM)) {
-            RenderSystem.setShaderColor(1, 1, 1, focused ? 1 : 0.5f);
             context.renderItem(marker.getItemIcon(), 0, 0);
-            RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha);
         } else {
             ResourceLocation icon = marker.getIcon().resourceLocation();
-            RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha);
             RenderSystem.setShaderTexture(0, icon);
-            context.blit(icon, 0, 0, 0, 0, 16, 16, 16, 16);
+
+
+            float r = marker.getColour().get(0);
+            float g = marker.getColour().get(1);
+            float b = marker.getColour().get(2);
+
+            RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+            RenderSystem.setShaderTexture(0, icon);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.disableDepthTest();
+
+            Matrix4f matrix = pose.last().pose();
+            BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+            buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+            buffer.vertex(matrix, 0, 16, 0).uv(0, 1).color(r, g, b, alpha).endVertex();
+            buffer.vertex(matrix, 16, 16, 0).uv(1, 1).color(r, g, b, alpha).endVertex();
+            buffer.vertex(matrix, 16, 0, 0).uv(1, 0).color(r, g, b, alpha).endVertex();
+            buffer.vertex(matrix, 0, 0, 0).uv(0, 0).color(r, g, b, alpha).endVertex();
+            BufferUploader.drawWithShader(buffer.end());
         }
+
+        int textColor = ((int) (alpha * 255.0f) & 0xFF << 24) | 0xFFFFFF;
 
         Font font = minecraft.font;
         int textWidth = font.width(distanceText);
         pose.translate(8 - textWidth / 2.0, 16, 0);
-        context.drawString(font, distanceText, 0, 0, 0xFFFFFF);
+        context.drawString(font, distanceText, 0, 0, textColor);
 
         pose.popPose();
     }
