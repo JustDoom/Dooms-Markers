@@ -179,9 +179,10 @@ public class DoomsMarkersClient {
             alpha = 0.5f;
         } else {
             alpha = (float) (distance / Config.get().fadeMarkerWithin) * 0.5f;
-            long timeSinceCreation = currentTime - marker.getCreationTime();
-            if (timeSinceCreation < 5000 && distance < 3) {
-                alpha = Math.max(1 - timeSinceCreation / 5000f, alpha);
+            final long timeSinceCreation = currentTime - marker.getCreationTime();
+            final int fadeOverTime = Config.get().fadeNewMarkerOverTime * 1000;
+            if (timeSinceCreation < fadeOverTime && distance < 3) {
+                alpha = Math.max(1 - (float) timeSinceCreation / fadeOverTime, alpha);
             }
         }
 

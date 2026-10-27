@@ -24,7 +24,10 @@ public class Config {
     public double minimumMarkerDistance = 5;
 
     @SerializedName("fade_marker_within")
-    public  double fadeMarkerWithin = 5;
+    public double fadeMarkerWithin = 5;
+
+    @SerializedName("fade_new_marker_over_time")
+    public int fadeNewMarkerOverTime = 5;
 
     @SerializedName("compress_unit")
     public boolean compressUnit = true;
