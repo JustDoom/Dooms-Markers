@@ -175,30 +175,22 @@ public class DoomsMarkersClient {
         float alpha;
         if (focused) {
             alpha = 1;
-            System.out.println("Focused " + alpha);
         } else if (scale == 1) { // Scale is 1 if over 10 blocks away
             alpha = 0.5f;
-            System.out.println("Far " + alpha);
         } else {
             alpha = 0.5f * (1 - (scale - 1));
             long timeSinceCreation = currentTime - marker.getCreationTime();
             if (timeSinceCreation < 5000 && distance < 3) {
                 alpha = Math.max(1 - timeSinceCreation / 5000f, alpha);
             }
-            System.out.println("Close " + alpha);
         }
 
-        alpha = 0.5f;
-
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
-        RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha);
-
+        RenderSystem.setShaderColor(marker.getColour().get(0), marker.getColour().get(1), marker.getColour().get(2), alpha); // Still needed to text colour
         if (marker.getIcon().equals(Markers.CUSTOM_ITEM)) {
             context.renderItem(marker.getItemIcon(), 0, 0);
         } else {
             ResourceLocation icon = marker.getIcon().resourceLocation();
-            RenderSystem.setShaderTexture(0, icon);
-
 
             float r = marker.getColour().get(0);
             float g = marker.getColour().get(1);
@@ -210,6 +202,7 @@ public class DoomsMarkersClient {
             RenderSystem.defaultBlendFunc();
             RenderSystem.disableDepthTest();
 
+            // Normal texture rendering does not properly respect the shader colour
             Matrix4f matrix = pose.last().pose();
             BufferBuilder buffer = Tesselator.getInstance().getBuilder();
             buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
@@ -220,12 +213,10 @@ public class DoomsMarkersClient {
             BufferUploader.drawWithShader(buffer.end());
         }
 
-        int textColor = ((int) (alpha * 255.0f) & 0xFF << 24) | 0xFFFFFF;
-
         Font font = minecraft.font;
         int textWidth = font.width(distanceText);
         pose.translate(8 - textWidth / 2.0, 16, 0);
-        context.drawString(font, distanceText, 0, 0, textColor);
+        context.drawString(font, distanceText, 0, 0, 0xFFFFFF);
 
         pose.popPose();
     }
