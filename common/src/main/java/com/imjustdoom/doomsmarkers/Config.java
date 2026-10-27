@@ -23,8 +23,17 @@ public class Config {
     @SerializedName("minimum_marker_distance")
     public double minimumMarkerDistance = 5;
 
-    @SerializedName("fade_marker_within")
+    @SerializedName("focused_alpha")
+    public double focusedOpacity = 1;
+
+    @SerializedName("unfocused_alpha")
+    public double unfocusedOpacity = 0.5;
+
+    @SerializedName("start_marker_fade_from_distance")
     public double fadeMarkerWithin = 5;
+
+    @SerializedName("minimum_fade")
+    public double minimumFade = 0.3;
 
     @SerializedName("fade_new_marker_over_time")
     public int fadeNewMarkerOverTime = 5;

@@ -170,17 +170,21 @@ public class DoomsMarkersClient {
         pose.translate(screenX - size / 2f, screenY - size / 2f, 0);
         pose.scale(scale, scale, 1f);
 
+        final Config config = Config.get();
+        final float focusedOpacity = (float) config.focusedOpacity;
+        final float unfocusedOpacity = (float) config.unfocusedOpacity;
+        final float fadeWithin = (float) config.fadeMarkerWithin;
+
         // Handle the alpha level of the marker. Focused is always fully visible
         // Distance or creation time can affect the visibility level
         float alpha;
-        if (focused) {
-            alpha = 1;
-        } else if (distance > Config.get().fadeMarkerWithin) {
-            alpha = 0.5f;
-        } else {
-            alpha = (float) (distance / Config.get().fadeMarkerWithin) * 0.5f;
+        if (focused) alpha = focusedOpacity;
+        else if (distance >= fadeWithin) alpha = unfocusedOpacity;
+        else {
+            float fade = (float) (distance / fadeWithin);
+            alpha = (float) ((fade * (unfocusedOpacity - config.minimumFade)) + config.minimumFade);
             final long timeSinceCreation = currentTime - marker.getCreationTime();
-            final int fadeOverTime = Config.get().fadeNewMarkerOverTime * 1000;
+            final int fadeOverTime = config.fadeNewMarkerOverTime * 1000;
             if (timeSinceCreation < fadeOverTime && distance < 3) {
                 alpha = Math.max(1 - (float) timeSinceCreation / fadeOverTime, alpha);
             }
