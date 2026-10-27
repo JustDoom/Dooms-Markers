@@ -23,6 +23,9 @@ public class Config {
     @SerializedName("minimum_marker_distance")
     public double minimumMarkerDistance = 5;
 
+    @SerializedName("fade_marker_within")
+    public  double fadeMarkerWithin = 5;
+
     @SerializedName("compress_unit")
     public boolean compressUnit = true;
 

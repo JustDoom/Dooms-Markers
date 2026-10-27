@@ -175,10 +175,10 @@ public class DoomsMarkersClient {
         float alpha;
         if (focused) {
             alpha = 1;
-        } else if (scale == 1) { // Scale is 1 if over 10 blocks away
+        } else if (distance > Config.get().fadeMarkerWithin) {
             alpha = 0.5f;
         } else {
-            alpha = 0.5f * (1 - (scale - 1));
+            alpha = (float) (distance / Config.get().fadeMarkerWithin) * 0.5f;
             long timeSinceCreation = currentTime - marker.getCreationTime();
             if (timeSinceCreation < 5000 && distance < 3) {
                 alpha = Math.max(1 - timeSinceCreation / 5000f, alpha);
