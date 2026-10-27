@@ -31,10 +31,7 @@ public abstract class ClientMinecraftMixin {
     @Inject(at = @At("RETURN"), method = "tick")
     private void init(CallbackInfo info) {
         Minecraft minecraft = (Minecraft) (Object) this;
-
-        if (minecraft.player == null) {
-            return;
-        }
+        if (minecraft.player == null) return;
 
         if (DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING.consumeClick()) {
             DoomsMarkersClient.TOGGLED_MARKERS = !DoomsMarkersClient.TOGGLED_MARKERS;

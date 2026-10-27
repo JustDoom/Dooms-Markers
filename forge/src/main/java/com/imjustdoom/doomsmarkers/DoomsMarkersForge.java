@@ -29,6 +29,7 @@ public class DoomsMarkersForge {
         modBus.addListener((RegisterKeyMappingsEvent event) -> {
             event.register(DoomsMarkersClient.MARKER_KEY_MAPPING);
             event.register(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
+            event.register(DoomsMarkersClient.DELETE_MARKER_MAPPING);
         });
 
         COMMAND_ARGUMENT_TYPES.register(modBus);

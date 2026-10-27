@@ -2,5 +2,6 @@
   "key.categories.doomsmarkers": "Doom's Markers",
 
   "category.doomsmarkers.use": "Use",
-  "category.doomsmarkers.toggle": "Toggle"
+  "category.doomsmarkers.toggle": "Toggle",
+  "category.doomsmarkers.delete": "Delete"
 }

@@ -30,6 +30,7 @@ import java.util.List;
 public class DoomsMarkersClient {
     public static final KeyMapping MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.use", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_GRAVE_ACCENT, "key.categories.doomsmarkers");
     public static final KeyMapping TOGGLE_MARKER_KEY_MAPPING = new KeyMapping("category.doomsmarkers.toggle", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_M, "key.categories.doomsmarkers");
+    public static final KeyMapping DELETE_MARKER_MAPPING = new KeyMapping("category.doomsmarkers.delete", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_DELETE, "key.categories.doomsmarkers");
 
     // List of focused markers. Used by other classes/mixins to check what marker is focused. Does support multiple in
     // focus. Maybe change it to just one
@@ -141,14 +142,13 @@ public class DoomsMarkersClient {
             FOCUSED_MARKER = marker;
             if (MARKER_KEY_MAPPING.isDown()) {
                 if (minecraft.options.keyAttack.consumeClick()) {
-                    if (!marker.canPlayerRemove()) {
-                        return;
-                    }
+                    if (!marker.canPlayerRemove()) return;
 
                     KEY_USED_THIS_HOLD = true;
 
                     it.remove();
                     ClientUtil.sendRemoveMarker(minecraft, marker);
+                    return;
                 } else if (minecraft.options.keyPickItem.consumeClick()) {
                     if (!marker.canPlayerCustomise()) {
                         return;
@@ -162,6 +162,10 @@ public class DoomsMarkersClient {
 
                     ClientUtil.sendUpdateColour(minecraft, marker, dye);
                 }
+            } else if (DELETE_MARKER_MAPPING.isDown() && DELETE_MARKER_MAPPING.consumeClick() && marker.canPlayerRemove()) {
+                it.remove();
+                ClientUtil.sendRemoveMarker(minecraft, marker);
+                return;
             }
         }
 
