@@ -30,7 +30,10 @@ public class Config {
     public double unfocusedOpacity = 0.5;
 
     @SerializedName("start_marker_fade_from_distance")
-    public double fadeMarkerWithin = 5;
+    public double startFadeFrom = 5;
+
+    @SerializedName("end_marker_fade_from_distance")
+    public double finishFadeFrom = 1;
 
     @SerializedName("minimum_fade")
     public double minimumFade = 0.3;
