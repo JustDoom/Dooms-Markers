@@ -10,6 +10,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
@@ -26,14 +27,15 @@ public class DoomsMarkersForge {
 
         MinecraftForge.EVENT_BUS.register(ServerListener.class);
 
-        modBus.addListener((RegisterKeyMappingsEvent event) -> {
-            event.register(DoomsMarkersClient.MARKER_KEY_MAPPING);
-            event.register(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
-            event.register(DoomsMarkersClient.DELETE_MARKER_MAPPING);
-        });
-
         COMMAND_ARGUMENT_TYPES.register(modBus);
 
         DoomsMarkers.init();
+    }
+
+    @SubscribeEvent
+    public void registerBindings(RegisterKeyMappingsEvent event) {
+        event.register(DoomsMarkersClient.MARKER_KEY_MAPPING);
+        event.register(DoomsMarkersClient.TOGGLE_MARKER_KEY_MAPPING);
+        event.register(DoomsMarkersClient.DELETE_MARKER_MAPPING);
     }
 }
